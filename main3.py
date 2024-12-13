@@ -468,7 +468,7 @@ if page == "Recommendation System":
 
             st.dataframe(recommendations)
 
-    if page == "Collaborative Filtering SVD":
+    if selected_model == "Collaborative Filtering SVD":
         st.title("Collaborative Filtering with SVD")
         # Show user table
         display_user_table()
