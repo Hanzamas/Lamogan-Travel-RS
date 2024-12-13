@@ -75,15 +75,28 @@ def collaborative_filtering(data, user_id, n=5):
     recommended_places = [place[0] for place in predictions]
     return data[data['Place_Id'].isin(recommended_places)][['Place_Name', 'Category', 'City', 'Rating', 'Description']]
 
+# Simple Recommendation
+def simple_recommender(data, n=5):
+    data = data.sort_values(by='Rating', ascending=False)
+    return data[['Place_Name', 'Category', 'City', 'Rating', 'Price']].head(n)
+
 # Streamlit UI
 st.title("Travel Recommendation System")
 st.sidebar.header("Recommendation Options")
 selected_model = st.sidebar.selectbox(
     "Select Recommendation Model:",
-    ["Content-Based Filtering", "Collaborative Filtering"]
+    ["Simple Recommendation", "Content-Based Filtering", "Collaborative Filtering"]
 )
 
-if selected_model == "Content-Based Filtering":
+if selected_model == "Simple Recommendation":
+    st.subheader("Simple Recommendations")
+    num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
+    if st.button("Get Recommendations"):
+        recommendations = simple_recommender(tourism_with_id, num_recommendations)
+        st.write("Here are the top recommended places:")
+        st.dataframe(recommendations)
+
+elif selected_model == "Content-Based Filtering":
     st.subheader("Content-Based Recommendations")
     selected_place = st.selectbox("Select a Place:", merged_data['Place_Name'].unique())
     num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
