@@ -464,7 +464,7 @@ if page == "Recommendation System":
 
     elif selected_model == "Collaborative Filtering RecommenderNet":
 
-        st.subheader("Collaborative Recommendations")
+        st.subheader("Collaborative Recommendations RecommenderNet Tensorflow Keras Model")
         # Show user table
         display_user_table()
         user_id = st.number_input("Enter User ID:", min_value=1, step=1)
