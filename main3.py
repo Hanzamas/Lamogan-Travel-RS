@@ -149,6 +149,37 @@ def display_statistics():
     ax.set_ylabel("Rating")
     st.pyplot(fig)
 
+    # User Data Statistics
+    st.subheader("User Data Insights")
+
+    # Gender Distribution
+    st.subheader("Gender Distribution")
+    gender_counts = user_data['Gender'].value_counts()
+    st.bar_chart(gender_counts)
+
+    # Location Distribution
+    st.subheader("Location Distribution")
+    location_counts = user_data['Location'].value_counts()
+    st.bar_chart(location_counts)
+
+    # Age Distribution
+    st.subheader("Age Distribution")
+    user_data['Age_Group'] = pd.cut(user_data['Age'], bins=[0, 20, 30, 40, 100],
+                                    labels=["<20", "20-30", "30-40", ">40"])
+    age_group_counts = user_data['Age_Group'].value_counts()
+    st.bar_chart(age_group_counts)
+
+    # Average Ratings by Gender
+    st.subheader("Average Ratings by Gender")
+    avg_rating_by_gender = tourism_rating.merge(user_data, on='User_Id').groupby('Gender')['Place_Ratings'].mean()
+    st.bar_chart(avg_rating_by_gender)
+
+    # Average Ratings by Age Group
+    st.subheader("Average Ratings by Age Group")
+    avg_rating_by_age = tourism_rating.merge(user_data, on='User_Id').groupby('Age_Group')['Place_Ratings'].mean()
+    st.bar_chart(avg_rating_by_age)
+
+
 # Streamlit UI
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to:", ["Recommendation System", "Statistics"])
