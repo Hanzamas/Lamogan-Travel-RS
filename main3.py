@@ -90,7 +90,7 @@ cosine_sim, indices = compute_similarity(merged_data)
 #     return recommendations
 
 # Content-Based Recommendation
-def content_based_recommendation(data, title, threshold=0.1, n=5):
+def content_based_recommendation(data, title, threshold=0.01, n=5):
     if title not in indices:
         st.error(f"The place '{title}' is not found in the dataset!")
         return pd.DataFrame()
