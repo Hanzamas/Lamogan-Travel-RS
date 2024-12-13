@@ -4,6 +4,13 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from surprise import SVD, Dataset, Reader
 import matplotlib.pyplot as plt
+from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFactory
+
+
+# Buat daftar stop words bahasa Indonesia menggunakan Sastrawi
+factory = StopWordRemoverFactory()
+indonesian_stop_words = factory.get_stop_words()
+
 
 # Load datasets
 @st.cache
@@ -29,7 +36,7 @@ merged_data = preprocess_data()
 # Compute TF-IDF and Cosine Similarity
 @st.cache
 def compute_similarity(data):
-    tfidf = TfidfVectorizer(stop_words='indonesia')
+    tfidf = TfidfVectorizer(stop_words=indonesian_stop_words)
     tfidf_matrix = tfidf.fit_transform(data['content'])
     cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
     indices = pd.Series(data.index, index=data['Place_Name']).drop_duplicates()
