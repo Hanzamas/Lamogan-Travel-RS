@@ -29,7 +29,7 @@ merged_data = preprocess_data()
 # Compute TF-IDF and Cosine Similarity
 @st.cache
 def compute_similarity(data):
-    tfidf = TfidfVectorizer(stop_words='english')
+    tfidf = TfidfVectorizer(stop_words='indonesia')
     tfidf_matrix = tfidf.fit_transform(data['content'])
     cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
     indices = pd.Series(data.index, index=data['Place_Name']).drop_duplicates()
@@ -38,6 +38,8 @@ def compute_similarity(data):
 cosine_sim, indices = compute_similarity(merged_data)
 
 # Content-Based Recommendation
+# With enhanced relevance
+
 def content_based_recommendation(data, title, min_price=None, max_price=None, min_rating=None, n=5):
     if title not in indices:
         st.error(f"The place '{title}' is not found in the dataset!")
@@ -48,19 +50,28 @@ def content_based_recommendation(data, title, min_price=None, max_price=None, mi
         idx = idx.iloc[0]
     idx = int(idx)
 
+    # Filter by category of the selected place
+    selected_category = data.loc[idx, 'Category']
+    filtered_data = data[data['Category'] == selected_category]
+
+    # Compute similarity
     sim_scores = cosine_sim[idx].flatten()
-    sim_scores = [(i, score) for i, score in enumerate(sim_scores) if i != idx]
+    sim_scores = [(i, score) for i, score in enumerate(sim_scores) if i != idx and data.iloc[i]['Category'] == selected_category]
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[:n]
 
     place_indices = [i[0] for i in sim_scores]
-    recommendations = data.iloc[place_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
+    recommendations = filtered_data.iloc[place_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
 
+    # Apply additional filters
     if min_price:
         recommendations = recommendations[recommendations['Price'] >= min_price]
     if max_price:
         recommendations = recommendations[recommendations['Price'] <= max_price]
     if min_rating:
         recommendations = recommendations[recommendations['Rating'] >= min_rating]
+
+    # Diversify results
+    recommendations = recommendations.groupby('Category').head(2)
 
     return recommendations
 
@@ -113,7 +124,7 @@ def simple_recommender(data, category=None, min_price=None, max_price=None, min_
     data = data.sort_values(by='Rating', ascending=False)
     return data[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Jumlah Ulasan']].head(n)
 
-# Statistics Page
+
 def display_statistics():
     st.title("Statistics and Insights")
 
