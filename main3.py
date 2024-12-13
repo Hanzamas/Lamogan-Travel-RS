@@ -112,7 +112,7 @@ def content_based_recommendation(data, title, threshold=0.1, n=5):
 
     # Get the indices and details of the top similar places
     similar_indices = [i[0] for i in top_similar_places]
-    recommendations = data.iloc[similar_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
+    recommendations = data.iloc[similar_indices][['Place_Name', 'Description', 'Category']]
 
     # Exclude the selected place from recommendations by name
     recommendations = recommendations[recommendations['Place_Name'] != title]
