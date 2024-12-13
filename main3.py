@@ -6,14 +6,12 @@ from surprise import SVD, Dataset, Reader
 import matplotlib.pyplot as plt
 from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFactory
 
-
 # Buat daftar stop words bahasa Indonesia menggunakan Sastrawi
 factory = StopWordRemoverFactory()
 indonesian_stop_words = factory.get_stop_words()
-#s
 
 # Load datasets
-@st.cache
+@st.cache_data
 def load_data():
     tourism_rating = pd.read_csv("data/tourism_rating.csv", encoding="Windows-1252")
     tourism_with_id = pd.read_csv("data/tourism_with_id.csv", encoding="Windows-1252")
@@ -30,30 +28,26 @@ def preprocess_data():
 
     # Create 'content' column using relevant fields
     merged_data['content'] = merged_data[
-        ['Description', 'Category', 'City', 'Fasilitas']
+        ['Place_Name', 'Category', 'Description']
     ].fillna('').apply(lambda x: ' '.join(map(str, x)), axis=1)
 
     return merged_data
 
-
 merged_data = preprocess_data()
 
-
 # Compute TF-IDF and Cosine Similarity
-@st.cache
+@st.cache_data
 def compute_similarity(data):
-    tfidf = TfidfVectorizer(stop_words='english')
+    tfidf = TfidfVectorizer(stop_words=indonesian_stop_words)
     tfidf_matrix = tfidf.fit_transform(data['content'])
     cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
     indices = pd.Series(data.index, index=data['Place_Name']).drop_duplicates()
     return cosine_sim, indices
 
-
 cosine_sim, indices = compute_similarity(merged_data)
 
 
 # Content-Based Recommendation
-# With enhanced relevance
 def content_based_recommendation(data, title, n=5):
     if title not in indices:
         st.error(f"The place '{title}' is not found in the dataset!")
@@ -64,9 +58,6 @@ def content_based_recommendation(data, title, n=5):
     if isinstance(idx, pd.Series):
         idx = idx.iloc[0]
     idx = int(idx)
-
-    # Ambil kategori dari tempat yang dipilih
-    selected_category = data.loc[idx, 'Category']
 
     # Hitung skor kesamaan untuk semua tempat
     sim_scores = cosine_sim[idx].flatten()
@@ -80,11 +71,8 @@ def content_based_recommendation(data, title, n=5):
     # Tambahkan informasi tempat ke DataFrame skor kemiripan
     similarity_df = similarity_df.merge(data[['Place_Name', 'Category']], left_on='index', right_index=True)
 
-    # Filter tempat berdasarkan kategori dan kecuali tempat input
-    filtered_df = similarity_df[
-        (similarity_df['Category'] == selected_category) &
-        (similarity_df['index'] != idx)
-    ]
+    # Filter tempat kecuali tempat input
+    filtered_df = similarity_df[similarity_df['index'] != idx]
 
     # Urutkan berdasarkan skor kemiripan dan ambil n rekomendasi teratas
     top_indices = filtered_df.sort_values('similarity', ascending=False).head(n)['index']
@@ -112,6 +100,10 @@ def collaborative_filtering(data, user_id, n=5):
     all_places = data['Place_Id'].unique()
     unvisited_places = [place for place in all_places if place not in visited_places]
 
+    if not unvisited_places:
+        fallback_recommendations = tourism_with_id.sort_values(by=['Rating', 'Jumlah Ulasan'], ascending=[False, False])
+        return fallback_recommendations[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']].head(n)
+
     predictions = [(place, svd.predict(user_id, place).est) for place in unvisited_places]
     predictions = sorted(predictions, key=lambda x: x[1], reverse=True)[:n]
 
@@ -136,6 +128,7 @@ def simple_recommender(data, category=None, min_price=None, max_price=None, min_
 
     data = data.sort_values(by='Rating', ascending=False)
     return data[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Jumlah Ulasan']].head(n)
+
 
 
 
