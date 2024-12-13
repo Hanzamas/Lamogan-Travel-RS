@@ -323,6 +323,7 @@ if page == "Recommendation System":
             st.write("Here are the top recommendations based on your preferences:")
 
             st.dataframe(recommendations)
+
     elif selected_model == "Content-Based Filtering+":
         st.subheader("Content-Based Recommendations+")
 
