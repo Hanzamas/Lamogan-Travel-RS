@@ -178,7 +178,10 @@ def collaborative_filtering_with_model(data, user_id, model, n=5):
 @st.cache_resource
 def load_recommendation_model():
     try:
-        return keras.models.load_model('recommender_model.keras')
+        return load_model(
+            "recommender_model.keras",
+            custom_objects={"RecommenderNet": RecommenderNet}
+        )
     except Exception as e:
         st.error(f"Error loading model: {e}")
         return None
