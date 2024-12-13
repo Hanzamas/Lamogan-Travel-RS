@@ -66,19 +66,10 @@ def content_based_recommendation(data, title,  n=5):
     sim_scores = [(i, score) for i, score in enumerate(sim_scores) if i != idx and data.iloc[i]['Category'] == selected_category]
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[:n]
 
-    # Map global indices to local indices in filtered_data
-    global_indices = [i[0] for i in sim_scores]
-    local_indices = filtered_data.index.intersection(global_indices).tolist()
-
-    # Get recommendations
-    recommendations = filtered_data.loc[local_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
-
-    # Exclude the selected place from recommendations by name
-    recommendations = recommendations[recommendations['Place_Name'] != title]
-
+    place_indices = [i[0] for i in sim_scores]
+    recommendations = filtered_data.iloc[place_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
 
     return recommendations
-
 
 
 # Collaborative Filtering
@@ -104,7 +95,6 @@ def collaborative_filtering(data, user_id, n=5):
 
     recommended_places = [place[0] for place in predictions]
     recommendations = tourism_with_id[tourism_with_id['Place_Id'].isin(recommended_places)][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
-
 
     return recommendations
 
