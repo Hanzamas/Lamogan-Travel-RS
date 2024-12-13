@@ -80,6 +80,42 @@ def content_based_recommendation(data, title, n=5):
 
     return recommendations
 
+# Content-Based Filtering+
+def content_based_recommendation_plus(data, title, n=5, min_reviews=0, min_rating=0):
+    if title not in indices:
+        st.error(f"The place '{title}' is not found in the dataset!")
+        return pd.DataFrame()
+
+    # Ambil indeks tempat yang dipilih
+    idx = indices[title]
+    if isinstance(idx, pd.Series):
+        idx = idx.iloc[0]
+    idx = int(idx)
+
+    # Hitung skor kesamaan untuk semua tempat
+    sim_scores = cosine_sim[idx].flatten()
+
+    # Buat DataFrame skor kemiripan
+    similarity_df = pd.DataFrame({
+        'index': range(len(sim_scores)),
+        'similarity': sim_scores
+    })
+
+    # Tambahkan informasi tempat ke DataFrame skor kemiripan
+    similarity_df = similarity_df.merge(data[['Place_Name', 'Category', 'Rating', 'Jumlah Ulasan']], left_on='index', right_index=True)
+
+    # Filter tempat kecuali tempat input dan tambahkan kriteria popularitas serta rating minimum
+    filtered_df = similarity_df[
+        (similarity_df['index'] != idx) &
+        (similarity_df['Jumlah Ulasan'] >= min_reviews) &
+        (similarity_df['Rating'] >= min_rating)
+    ]
+
+    # Urutkan berdasarkan skor kemiripan dan ambil n rekomendasi teratas
+    top_indices = filtered_df.sort_values('similarity', ascending=False).head(n)['index']
+    recommendations = data.iloc[top_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
+
+    return recommendations
 
 
 # Collaborative Filtering
@@ -286,6 +322,24 @@ if page == "Recommendation System":
 
             st.write("Here are the top recommendations based on your preferences:")
 
+            st.dataframe(recommendations)
+    elif selected_model == "Content-Based Filtering+":
+        st.subheader("Content-Based Recommendations+")
+
+        selected_place = st.selectbox("Select a Place (Required):", merged_data['Place_Name'].unique())
+        min_reviews = st.number_input("Minimum Number of Reviews (Optional):", min_value=0, step=1, value=0)
+        min_rating = st.slider("Minimum Rating (Optional):", min_value=0.0, max_value=5.0, step=0.1, value=0.0)
+        num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
+
+        if st.button("Recommend Based on Content+"):
+            recommendations = content_based_recommendation_plus(
+                merged_data,
+                title=selected_place,
+                n=num_recommendations,
+                min_reviews=min_reviews,
+                min_rating=min_rating
+            )
+            st.write("Here are the top recommended places based on enhanced criteria:")
             st.dataframe(recommendations)
 
 elif page == "Statistics":
