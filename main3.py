@@ -81,11 +81,13 @@ def content_based_recommendation(data, title, n=5):
         st.error("Selected place not found in the dataset!")
         return pd.DataFrame()
     idx = indices[title]
-    sim_scores = list(enumerate(cosine_sim[idx]))
-    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
-    sim_scores = sim_scores[1:n+1]
+    sim_scores = cosine_sim[idx].flatten()  # Pastikan array 1D
+    sim_scores = [(i, score) for i, score in enumerate(sim_scores)]  # Buat list pasangan indeks dan skor
+    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)  # Urutkan berdasarkan skor
+    sim_scores = sim_scores[1:n+1]  # Ambil N skor tertinggi setelah elemen pertama
     place_indices = [i[0] for i in sim_scores]
     return data.iloc[place_indices][["Place_Name", "Category", "City", "Rating"]]
+
 
 def collaborative_filtering(data, user_id, n=5):
     reader = Reader(rating_scale=(0.5, 5))
