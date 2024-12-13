@@ -27,11 +27,24 @@ def preprocess_data():
     tourism_with_id['Jumlah Ulasan'] = tourism_with_id['Jumlah Ulasan'].str.replace(',', '').astype(int)
     merged_data = pd.merge(tourism_rating, tourism_with_id, on="Place_Id")
     merged_data['content'] = merged_data[
-        ['Place_Name', 'Description', 'Category', 'City', 'Price', 'Rating', 'Fasilitas']
+        ['Place_Id', 'Place_Name', 'Description', 'Category', 'Price', 'Rating', 'Fasilitas', 'Jumlah Ulasan']
     ].fillna('').apply(lambda x: ' '.join(map(str, x)), axis=1)
-    return merged_data
+
+    # return merged_data
+    merged_data2 = merged_data[['Place_Name', 'Description', 'Category']]
+    return merged_data2
 
 merged_data = preprocess_data()
+
+# # Compute TF-IDF and Cosine Similarity
+# @st.cache
+# def compute_similarity(data):
+#     tfidf = TfidfVectorizer(stop_words=indonesian_stop_words)
+#     tfidf_matrix = tfidf.fit_transform(data['content'])
+#     cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
+#     indices = pd.Series(data.index, index=data['Place_Name']).drop_duplicates()
+#     return cosine_sim, indices
+# cosine_sim, indices = compute_similarity(merged_data)
 
 # Compute TF-IDF and Cosine Similarity
 @st.cache
@@ -47,7 +60,39 @@ cosine_sim, indices = compute_similarity(merged_data)
 # Content-Based Recommendation
 # With enhanced relevance
 
-def content_based_recommendation(data, title, min_price=None, max_price=None, min_rating=None, n=5):
+# def content_based_recommendation(data, title,  n=5):
+#     if title not in indices:
+#         st.error(f"The place '{title}' is not found in the dataset!")
+#         return pd.DataFrame()
+#
+#     idx = indices[title]
+#     if isinstance(idx, pd.Series):
+#         idx = idx.iloc[0]
+#     idx = int(idx)
+#
+#     # Filter by category of the selected place
+#     selected_category = data.loc[idx, 'Category']
+#     filtered_data = data[data['Category'] == selected_category]
+#
+#     # Compute similarity
+#     sim_scores = cosine_sim[idx].flatten()
+#     sim_scores = [(i, score) for i, score in enumerate(sim_scores) if i != idx and data.iloc[i]['Category'] == selected_category]
+#     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[:n]
+#
+#     # Map global indices to local indices in filtered_data
+#     global_indices = [i[0] for i in sim_scores]
+#     local_indices = filtered_data.index.intersection(global_indices).tolist()
+#
+#     # Get recommendations
+#     recommendations = filtered_data.loc[local_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
+#
+#     # Exclude the selected place from recommendations by name
+#     recommendations = recommendations[recommendations['Place_Name'] != title]
+#
+#
+#     return recommendations
+
+def content_based_recommendation(data, title, threshold=0.1, n=5):
     if title not in indices:
         st.error(f"The place '{title}' is not found in the dataset!")
         return pd.DataFrame()
@@ -57,28 +102,23 @@ def content_based_recommendation(data, title, min_price=None, max_price=None, mi
         idx = idx.iloc[0]
     idx = int(idx)
 
-    # Filter by category of the selected place
-    selected_category = data.loc[idx, 'Category']
-    filtered_data = data[data['Category'] == selected_category]
-
     # Compute similarity
-    sim_scores = cosine_sim[idx].flatten()
-    sim_scores = [(i, score) for i, score in enumerate(sim_scores) if i != idx and data.iloc[i]['Category'] == selected_category]
-    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[:n]
+    sim_scores = list(enumerate(cosine_sim[idx]))
 
-    # Map global indices to local indices in filtered_data
-    global_indices = [i[0] for i in sim_scores]
-    local_indices = filtered_data.index.intersection(global_indices).tolist()
+    # Filter out items with similarity below the threshold
+    sim_scores = [(i, score) for i, score in sim_scores if score > threshold]
+    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
 
-    # Get recommendations
-    recommendations = filtered_data.loc[local_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
+    # Get top similar places
+    top_similar_places = sim_scores[1:n+1]
 
-    # Exclude the selected place from recommendations by name
-    recommendations = recommendations[recommendations['Place_Name'] != title]
+    # Get the indices and details of the top similar places
+    similar_indices = [i[0] for i in top_similar_places]
+    recommendations = data.iloc[similar_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
+
 
 
     return recommendations
-
 
 # Collaborative Filtering
 def collaborative_filtering(data, user_id, min_price=None, max_price=None, min_rating=None, n=5):
