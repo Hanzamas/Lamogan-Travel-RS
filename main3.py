@@ -89,8 +89,14 @@ def content_based_recommendation(data, title, n=5):
         st.error(f"The place '{title}' is not found in the dataset!")
         return pd.DataFrame()
 
-    idx = indices[title]  # Ambil indeks tempat input
-    sim_scores = cosine_sim[idx].flatten()  # Pastikan skor kesamaan adalah array 1D
+    # Dapatkan indeks tempat sebagai integer
+    idx = indices[title]
+    if isinstance(idx, pd.Series):  # Jika idx adalah Series, ambil nilai pertama
+        idx = idx.iloc[0]
+    idx = int(idx)  # Pastikan idx berupa integer
+
+    # Ambil skor kesamaan
+    sim_scores = cosine_sim[idx].flatten()  # Pastikan array 1D
 
     # Hilangkan tempat input dari hasil rekomendasi
     sim_scores = [(i, score) for i, score in enumerate(sim_scores) if i != idx]
