@@ -2,5 +2,5 @@ streamlit
 pandas
 scikit-learn
 scipy
-numpy
+numpy<2
 scikit-surprise
