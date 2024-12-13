@@ -143,8 +143,11 @@ def collaborative_filtering_with_model(data, user_id, model, n=5):
             # Predict ratings for visited places
             ratings = model.predict(user_place_array).flatten()
 
-            # Get top N recommendations from visited places
-            top_ratings_indices = ratings.argsort()[-n:][::-1]
+            random_noise = np.random.uniform(-0.05, 0.05, len(ratings))
+            adjusted_ratings = ratings + random_noise
+
+            # Get top N recommendations from adjusted ratings
+            top_ratings_indices = adjusted_ratings.argsort()[-n:][::-1]
             recommended_place_ids = [
                 place_encoded_to_place.get(visited_encoded[x][0]) for x in top_ratings_indices
             ]
