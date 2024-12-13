@@ -51,20 +51,34 @@ def content_based_recommendation(data, title, n=5):
         st.error(f"The place '{title}' is not found in the dataset!")
         return pd.DataFrame()
 
+    # Ambil indeks tempat yang dipilih
     idx = indices[title]
+    if isinstance(idx, pd.Series):  # Jika idx adalah Series, ambil nilai pertama
+        idx = idx.iloc[0]
+    idx = int(idx)  # Pastikan idx adalah integer
+
+    # Hitung skor kesamaan untuk semua tempat
     sim_scores = list(enumerate(cosine_sim[idx]))
+
+
+
 
     # Filter tempat kecuali tempat input
     sim_scores = [score for score in sim_scores if score[0] != idx]
+
+
 
     # Urutkan berdasarkan skor kemiripan
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
 
     # Ambil n tempat teratas
     place_indices = [i[0] for i in sim_scores[:n]]
-    recommendations = data.iloc[place_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
 
+
+
+    recommendations = data.iloc[place_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
     return recommendations
+
 
 # Content-Based Filtering+
 def content_based_recommendation_plus(data, title, n=5, min_reviews=0, min_rating=0):
