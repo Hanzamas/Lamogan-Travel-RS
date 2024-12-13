@@ -100,11 +100,14 @@ def content_based_recommendation(data, title, threshold=0.1, n=5):
         idx = idx.iloc[0]
     idx = int(idx)
 
+    # Filter by category of the selected place
+    selected_category = data.loc[idx, 'Category']
+    filtered_data = data[data['Category'] == selected_category]
     # Compute similarity
     sim_scores = list(enumerate(cosine_sim[idx]))
 
     # Filter out items with similarity below the threshold
-    sim_scores = [(i, score) for i, score in sim_scores if score > threshold]
+    sim_scores = [(i, score) for i, score in sim_scores if score > threshold and data.iloc[i]['Category'] == selected_category]
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
 
     # Get top similar places
