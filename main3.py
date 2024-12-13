@@ -9,7 +9,7 @@ from surprise import SVD, Dataset, Reader
 def load_data():
     tourism_rating = pd.read_csv("data/tourism_rating.csv", encoding="Windows-1252")
     tourism_with_id = pd.read_csv("data/tourism_with_id.csv", encoding="Windows-1252")
-    user_data = pd.read_csv("user.csv", encoding="Windows-1252")
+    user_data = pd.read_csv("data/user.csv", encoding="Windows-1252")
     return tourism_rating, tourism_with_id, user_data
 
 tourism_rating, tourism_with_id, user_data = load_data()
