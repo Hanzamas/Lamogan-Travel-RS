@@ -5,6 +5,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from surprise import SVD, Dataset, Reader
 import matplotlib.pyplot as plt
 from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFactory
+from sklearn.feature_extraction.text import CountVectorizer
 
 # Buat daftar stop words bahasa Indonesia menggunakan Sastrawi
 factory = StopWordRemoverFactory()
@@ -16,104 +17,66 @@ def load_data():
     tourism_rating = pd.read_csv("data/tourism_rating.csv", encoding="ascii")
     tourism_with_id = pd.read_csv("data/tourism_with_id.csv", encoding="Johab")
     user_data = pd.read_csv("data/user.csv", encoding="ascii")
-    return tourism_rating, tourism_with_id, user_data
+    return tourism_rating, tourism_with_id, user_data,
 
 tourism_rating, tourism_with_id, user_data = load_data()
 
 # Preprocess Data
 def preprocess_data():
     tourism_with_id['Jumlah Ulasan'] = tourism_with_id['Jumlah Ulasan'].str.replace(',', '').astype(int)
-    merged_data = pd.merge(tourism_rating, tourism_with_id, on="Place_Id")
-
-    # Create 'content' column using relevant fields
-    merged_data['content'] = merged_data[
-        ['Place_Name', 'Category', 'Description']
-    ].fillna('').apply(lambda x: ' '.join(map(str, x)), axis=1)
-
-    return merged_data
+    # merged_data = pd.merge(tourism_rating, tourism_with_id, on="Place_Id")
+    tourism_with_id['combined'] = tourism_with_id['Place_Name'] + ' ' + tourism_with_id['Category']
+    return tourism_with_id
+    # # Create 'content' column using relevant fields
+    # merged_data['content'] = merged_data[
+    #     ['Place_Name', 'Category']
+    # ].fillna('').apply(lambda x: ' '.join(map(str, x)), axis=1)
+    # Combine 'Place_Name' and 'Category' into a new 'combined' column
+    # return merged_data
 
 merged_data = preprocess_data()
+
+
 
 # Compute TF-IDF and Cosine Similarity
 @st.cache_data
 def compute_similarity(data):
-    tfidf = TfidfVectorizer(stop_words=indonesian_stop_words)
-    tfidf_matrix = tfidf.fit_transform(data['content'])
-    cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
-    indices = pd.Series(data.index, index=data['Place_Name']).drop_duplicates()
-    return cosine_sim, indices
+    cv = CountVectorizer(stop_words=indonesian_stop_words)
+    cv_matrix = cv.fit_transform(data['combined'])
+    cosine_sim = cosine_similarity(cv_matrix)
+    # indices = pd.Series(data.index, index=data['Place_Name']).drop_duplicates()
+    # return cosine_sim, indices
+    return cosine_sim
+# cosine_sim, indices = compute_similarity(merged_data)
+cosine_sim = compute_similarity(merged_data)
 
-cosine_sim, indices = compute_similarity(merged_data)
 
-# Content-Based Filtering
-def content_based_recommendation(data, title, n=5):
-    if title not in indices:
-        st.error(f"The place '{title}' is not found in the dataset!")
-        return pd.DataFrame()
+# Content-Based Recommendation
+def content_based_recommendation(name, cosine_sim, items, n=5):
+    # Ensure case-insensitive matching
+    matching_items = items[items['combined'].str.contains(name, case=False, na=False)]
 
-    # Ambil indeks tempat yang dipilih
-    idx = indices[title]
-    if isinstance(idx, pd.Series):  # Jika idx adalah Series, ambil nilai pertama
-        idx = idx.iloc[0]
-    idx = int(idx)  # Pastikan idx adalah integer
+    if matching_items.empty:
+        st.warning(f"No places found matching '{name}'. Showing fallback recommendations.")
+        # Fallback: Top-rated places
+        fallback = items.sort_values(by='Rating', ascending=False)
+        return fallback[['Place_Name', 'Category', 'Price', 'Description', 'City']].head(n)
 
-    # Hitung skor kesamaan untuk semua tempat
+    # Get the index of the first matching item
+    idx = matching_items.index[0]
+
+    # Compute similarity scores
     sim_scores = list(enumerate(cosine_sim[idx]))
-
-
-
-
-    # Filter tempat kecuali tempat input
-    sim_scores = [score for score in sim_scores if score[0] != idx]
-
-
-
-    # Urutkan berdasarkan skor kemiripan
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
 
-    # Ambil n tempat teratas
-    place_indices = [i[0] for i in sim_scores[:n]]
+    # Get the indices of the top n most similar items
+    top_indices = [i[0] for i in sim_scores[1:n + 1]]  # Exclude the input itself
+    recommendations = items.iloc[top_indices][['Place_Name', 'Category', 'Price', 'Description', 'City']]
 
-
-
-    recommendations = data.iloc[place_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
-    return recommendations
-
-
-# Content-Based Filtering+
-def content_based_recommendation_plus(data, title, n=5, min_reviews=0, min_rating=0):
-    if title not in indices:
-        st.error(f"The place '{title}' is not found in the dataset!")
-        return pd.DataFrame()
-
-    # Ambil indeks tempat yang dipilih
-    idx = indices[title]
-    if isinstance(idx, pd.Series):
-        idx = idx.iloc[0]
-    idx = int(idx)
-
-    # Hitung skor kesamaan untuk semua tempat
-    sim_scores = cosine_sim[idx].flatten()
-
-    # Buat DataFrame skor kemiripan
-    similarity_df = pd.DataFrame({
-        'index': range(len(sim_scores)),
-        'similarity': sim_scores
-    })
-
-    # Tambahkan informasi tempat ke DataFrame skor kemiripan
-    similarity_df = similarity_df.merge(data[['Place_Name', 'Category', 'Rating', 'Jumlah Ulasan']], left_on='index', right_index=True)
-
-    # Filter tempat kecuali tempat input dan tambahkan kriteria popularitas serta rating minimum
-    filtered_df = similarity_df[
-        (similarity_df['index'] != idx) &
-        (similarity_df['Jumlah Ulasan'] >= min_reviews) &
-        (similarity_df['Rating'] >= min_rating)
-    ]
-
-    # Urutkan berdasarkan skor kemiripan dan ambil n rekomendasi teratas
-    top_indices = filtered_df.sort_values('similarity', ascending=False).head(n)['index']
-    recommendations = data.iloc[top_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
+    if recommendations.empty:
+        st.warning(f"No similar places found for '{name}'. Showing fallback recommendations.")
+        fallback = items.sort_values(by='Rating', ascending=False)
+        return fallback[['Place_Name', 'Category', 'Price', 'Description', 'City']].head(n)
 
     return recommendations
 
@@ -163,8 +126,6 @@ def simple_recommender(data, category=None, min_price=None, max_price=None, min_
 
     data = data.sort_values(by='Rating', ascending=False)
     return data[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Jumlah Ulasan']].head(n)
-
-
 
 
 def display_statistics():
@@ -242,7 +203,7 @@ if page == "Recommendation System":
     st.sidebar.header("Recommendation Options")
     selected_model = st.sidebar.selectbox(
         "Select Recommendation Model:",
-        ["Simple Recommendation", "Content-Based Filtering", "Content-Based Filtering+", "Collaborative Filtering"]
+        ["Simple Recommendation", "Content-Based Filtering", "Collaborative Filtering"]
     )
 
     if selected_model == "Simple Recommendation":
@@ -280,16 +241,17 @@ if page == "Recommendation System":
 
         st.subheader("Content-Based Recommendations")
 
-        selected_place = st.selectbox("Select a Place (Required):", merged_data['Place_Name'].unique())
+        selected_place = st.text_input("Enter a place name:")
         num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
 
-        if st.button("Recommend Based on Content"):
+        if st.button("Recommend"):
             recommendations = content_based_recommendation(
-                merged_data,
-                title=selected_place,
+                name=selected_place,
+                cosine_sim=cosine_sim,
+                items=merged_data,
                 n=num_recommendations
             )
-            st.write("Here are the top recommended places:")
+            st.write("Recommended Places:")
             st.dataframe(recommendations)
 
 
@@ -309,24 +271,7 @@ if page == "Recommendation System":
             st.write("Here are the top recommendations based on your preferences:")
             st.dataframe(recommendations)
 
-    elif selected_model == "Content-Based Filtering+":
-        st.subheader("Content-Based Recommendations+")
 
-        selected_place = st.selectbox("Select a Place (Required):", merged_data['Place_Name'].unique())
-        min_reviews = st.number_input("Minimum Number of Reviews (Optional):", min_value=0, step=1, value=0)
-        min_rating = st.slider("Minimum Rating (Optional):", min_value=0.0, max_value=5.0, step=0.1, value=0.0)
-        num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
-
-        if st.button("Recommend Based on Content+"):
-            recommendations = content_based_recommendation_plus(
-                merged_data,
-                title=selected_place,
-                n=num_recommendations,
-                min_reviews=min_reviews,
-                min_rating=min_rating
-            )
-            st.write("Here are the top recommended places based on enhanced criteria:")
-            st.dataframe(recommendations)
 
 elif page == "Statistics":
     display_statistics()
