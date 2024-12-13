@@ -110,6 +110,7 @@ def content_based_recommendation(data, title, n=5):
     return data.iloc[place_indices][["Place_Name", "Category", "City", "Rating", "Description"]]
 
 
+
 def collaborative_filtering(data, user_id, n=5):
     # Pastikan data sudah sesuai
     reader = Reader(rating_scale=(0.5, 5))
