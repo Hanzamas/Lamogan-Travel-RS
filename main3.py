@@ -10,7 +10,7 @@ from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFacto
 # Buat daftar stop words bahasa Indonesia menggunakan Sastrawi
 factory = StopWordRemoverFactory()
 indonesian_stop_words = factory.get_stop_words()
-
+#s
 
 # Load datasets
 @st.cache
