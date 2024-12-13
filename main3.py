@@ -311,22 +311,33 @@ if page == "Recommendation System":
             st.dataframe(recommendations)
 
 
-    elif selected_model == "Content-Based Filtering":
 
-        st.subheader("Content-Based Recommendations")
+    elif selected_model == "Collaborative Filtering":
 
-        selected_place = st.text_input("Enter a place name:")
+        st.subheader("Collaborative Recommendations")
+
+        user_id = st.number_input("Enter User ID:", min_value=1, step=1)
+
         num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
 
-        if st.button("Recommend"):
-            recommendations = content_based_recommendation(
-                name=selected_place,
-                cosine_sim=cosine_sim,
-                items=merged_data,
-                n=num_recommendations
-            )
-            st.write("Recommended Places:")
-            st.dataframe(recommendations)
+        if st.button("Recommend Based on User Preferences"):
+
+            if model:
+
+                recommendations = collaborative_filtering_with_model(
+
+                    tourism_rating, user_id, model, n=num_recommendations
+
+                )
+
+                st.write("Here are the recommendations based on your preferences:")
+
+                st.dataframe(recommendations)
+
+            else:
+
+                st.error("Model not loaded!")
+
 
 
 
