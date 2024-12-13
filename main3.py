@@ -29,10 +29,7 @@ def preprocess_data():
     merged_data['content'] = merged_data[
         ['Place_Id', 'Place_Name', 'Description', 'Category', 'Price', 'Rating', 'Fasilitas', 'Jumlah Ulasan']
     ].fillna('').apply(lambda x: ' '.join(map(str, x)), axis=1)
-
-    # return merged_data
-    merged_data2 = merged_data[['Place_Name', 'Description', 'Category']]
-    return merged_data2
+    return merged_data
 
 merged_data = preprocess_data()
 
@@ -47,7 +44,7 @@ merged_data = preprocess_data()
 # cosine_sim, indices = compute_similarity(merged_data)
 
 # Compute TF-IDF and Cosine Similarity
-@st.cache
+@st.cache_data
 def compute_similarity(data):
     tfidf = TfidfVectorizer(stop_words=indonesian_stop_words)
     tfidf_matrix = tfidf.fit_transform(data['content'])
@@ -92,6 +89,7 @@ cosine_sim, indices = compute_similarity(merged_data)
 #
 #     return recommendations
 
+# Content-Based Recommendation
 def content_based_recommendation(data, title, threshold=0.1, n=5):
     if title not in indices:
         st.error(f"The place '{title}' is not found in the dataset!")
@@ -115,8 +113,6 @@ def content_based_recommendation(data, title, threshold=0.1, n=5):
     # Get the indices and details of the top similar places
     similar_indices = [i[0] for i in top_similar_places]
     recommendations = data.iloc[similar_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
-
-
 
     return recommendations
 
