@@ -375,7 +375,7 @@ def display_statistics():
 
 # Streamlit UI
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to:", ["Recommendation System", "Statistics"])
+page = st.sidebar.radio("Go to:", ["Recommendation System", "Statistics", "Top 10 Best Places"])
 
 if page == "Recommendation System":
     st.title("Travel Recommendation System")
@@ -489,3 +489,12 @@ if page == "Recommendation System":
 
 elif page == "Statistics":
     display_statistics()
+
+elif page == "Top 10 Best Places":
+    st.title("Top 10 Best Places to Visit")
+
+    # Compute the top 10 places based on ratings and the number of reviews
+    top_places = tourism_with_id.sort_values(by=['Rating', 'Jumlah Ulasan'], ascending=[False, False]).head(10)
+
+    st.subheader("Here are the top 10 best-rated places by Ratings and Review:")
+    st.dataframe(top_places[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Jumlah Ulasan']])
