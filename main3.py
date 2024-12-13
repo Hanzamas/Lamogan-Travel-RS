@@ -539,7 +539,6 @@ if page == "Recommendation System":
         place_name = st.sidebar.selectbox("Select a Place Name (Optional):",
                                           [None] + list(merged_data['Place_Name'].unique()))
         num_recommendations = st.sidebar.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
-        num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
         alpha = st.slider("Alpha (Weight for Content-Based Recommendations):", min_value=0.0, max_value=1.0, value=0.5)
 
         if st.button("Recommend Based on Hybrid System"):
