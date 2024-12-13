@@ -52,7 +52,11 @@ def content_based_recommendation(data, title, n=5):
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[:n]
 
     place_indices = [i[0] for i in sim_scores]
-    return data.iloc[place_indices][['Place_Name', 'Category', 'City', 'Rating', 'Description']]
+    recommendations = data.iloc[place_indices][['Place_Name', 'Category', 'City', 'Rating', 'Description']]
+
+    # Remove input place from recommendations explicitly
+    recommendations = recommendations[recommendations['Place_Name'] != title]
+    return recommendations
 
 # Collaborative Filtering
 def collaborative_filtering(data, user_id, n=5):
@@ -68,19 +72,31 @@ def collaborative_filtering(data, user_id, n=5):
         st.error(f"User ID {user_id} is not found in the dataset!")
         return pd.DataFrame()
 
+    visited_places = data[data['User_Id'] == user_id]['Place_Id'].tolist()
     all_places = data['Place_Id'].unique()
-    predictions = [(place, svd.predict(user_id, place).est) for place in all_places]
+    unvisited_places = [place for place in all_places if place not in visited_places]
+
+    predictions = [(place, svd.predict(user_id, place).est) for place in unvisited_places]
     predictions = sorted(predictions, key=lambda x: x[1], reverse=True)[:n]
 
     recommended_places = [place[0] for place in predictions]
-    return data[data['Place_Id'].isin(recommended_places)][['Place_Name', 'Category', 'City', 'Rating', 'Description']]
+    return tourism_with_id[tourism_with_id['Place_Id'].isin(recommended_places)][['Place_Name', 'Category', 'City', 'Rating', 'Description']]
 
-#Simple Recommendation
-def simple_recommender(data, category=None, n=5):
+# Simple Recommendation
+def simple_recommender(data, category=None, min_price=None, max_price=None, min_rating=None, min_reviews=None, n=5):
     if category:
         data = data[data['Category'] == category]  # Filter berdasarkan kategori
+    if min_price is not None:
+        data = data[data['Price'] >= min_price]
+    if max_price is not None:
+        data = data[data['Price'] <= max_price]
+    if min_rating is not None:
+        data = data[data['Rating'] >= min_rating]
+    if min_reviews is not None:
+        data = data[data['Jumlah Ulasan'] >= min_reviews]
+
     data = data.sort_values(by='Rating', ascending=False)
-    return data[['Place_Name', 'Category', 'City', 'Rating', 'Price']].head(n)
+    return data[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Jumlah Ulasan']].head(n)
 
 # Streamlit UI
 st.title("Travel Recommendation System")
@@ -90,22 +106,33 @@ selected_model = st.sidebar.selectbox(
     ["Simple Recommendation", "Content-Based Filtering", "Collaborative Filtering"]
 )
 
-# Streamlit UI
 if selected_model == "Simple Recommendation":
     st.subheader("Simple Recommendations")
 
-    # Tambahkan filter kategori
+    # Tambahkan filter kategori dan parameter lainnya
     category_options = tourism_with_id['Category'].unique()
-    selected_category = st.selectbox("Select a Category (Optional):", ["All"] + list(category_options))
+    selected_category = st.selectbox("Select a Category (Optional):", [None] + list(category_options))
+
+    min_price = st.number_input("Minimum Price (Optional):", min_value=0, step=1, value=0)
+    max_price = st.number_input("Maximum Price (Optional):", min_value=0, step=1, value=0)
+    if max_price == 0:
+        max_price = None  # Tidak ada batas atas harga jika tidak diatur
+
+    min_rating = st.slider("Minimum Rating (Optional):", min_value=0.0, max_value=5.0, step=0.1, value=0.0)
+    min_reviews = st.number_input("Minimum Number of Reviews (Optional):", min_value=0, step=1, value=0)
 
     num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
 
     if st.button("Get Recommendations"):
-        if selected_category == "All":
-            recommendations = simple_recommender(tourism_with_id, n=num_recommendations)
-        else:
-            recommendations = simple_recommender(tourism_with_id, category=selected_category, n=num_recommendations)
-
+        recommendations = simple_recommender(
+            tourism_with_id,
+            category=selected_category,
+            min_price=min_price if min_price > 0 else None,
+            max_price=max_price,
+            min_rating=min_rating if min_rating > 0 else None,
+            min_reviews=min_reviews if min_reviews > 0 else None,
+            n=num_recommendations
+        )
         st.write("Here are the top recommended places:")
         st.dataframe(recommendations)
 
