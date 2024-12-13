@@ -300,6 +300,11 @@ def simple_recommender(data, category=None, min_price=None, max_price=None, min_
     data = data.sort_values(by='Rating', ascending=False)
     return data[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Jumlah Ulasan']].head(n)
 
+# Display User Table
+def display_user_table():
+    st.subheader("User Information")
+    user_table = user_data[['User_Id', 'Name', 'Gender', 'Age', 'Location']].sort_values(by='User_Id')
+    st.dataframe(user_table)
 
 def display_statistics():
     st.title("Statistics and Insights")
@@ -414,7 +419,8 @@ if page == "Recommendation System":
     elif selected_model == "Collaborative Filtering":
 
         st.subheader("Collaborative Recommendations")
-
+        # Show user table
+        display_user_table()
         user_id = st.number_input("Enter User ID:", min_value=1, step=1)
 
         num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
@@ -464,7 +470,8 @@ if page == "Recommendation System":
 
     if page == "Collaborative Filtering SVD":
         st.title("Collaborative Filtering with SVD")
-
+        # Show user table
+        display_user_table()
         # User input for User ID
         user_id = st.number_input("Enter User ID:", min_value=1, step=1)
         num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
