@@ -27,7 +27,7 @@ def preprocess_data():
     tourism_with_id['Jumlah Ulasan'] = tourism_with_id['Jumlah Ulasan'].str.replace(',', '').astype(int)
     merged_data = pd.merge(tourism_rating, tourism_with_id, on="Place_Id")
     merged_data['content'] = merged_data[
-        ['Place_Name', 'Description', 'Category', 'Fasilitas']
+        ['Place_Name', 'Description', 'Category']
     ].fillna('').apply(lambda x: ' '.join(map(str, x)), axis=1)
     return merged_data
 
@@ -112,7 +112,7 @@ def content_based_recommendation(data, title, threshold=0.1, n=5):
 
     # Get the indices and details of the top similar places
     similar_indices = [i[0] for i in top_similar_places]
-    recommendations = data.iloc[similar_indices][['Place_Name', 'Category',  'Description', 'Fasilitas']]
+    recommendations = data.iloc[similar_indices][['Place_Name', 'Category',  'Description']]
 
     return recommendations
 
