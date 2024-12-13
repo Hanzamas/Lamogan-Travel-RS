@@ -71,10 +71,12 @@ def content_based_recommendation(data, title, min_price=None, max_price=None, mi
     local_indices = filtered_data.index.intersection(global_indices).tolist()
 
     # Get recommendations
-    recommendations = filtered_data.loc[local_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
-
-    # Exclude the selected place from recommendations by name
-    recommendations = recommendations[recommendations['Place_Name'] != title]
+    # recommendations = filtered_data.loc[local_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
+    # Get recommendations
+    recommendations = filtered_data.loc[local_indices][
+        ['Category', 'Fasilitas', 'Description']]
+    # # Exclude the selected place from recommendations by name
+    # recommendations = recommendations[recommendations['Place_Name'] != title]
 
     # Apply additional filters
     if min_price:
