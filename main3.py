@@ -9,7 +9,7 @@ from surprise import SVD, Dataset, Reader
 def load_data():
     tourism_rating = pd.read_csv("data/tourism_rating.csv", encoding="Windows-1252")
     tourism_with_id = pd.read_csv("data/tourism_with_id.csv", encoding="Windows-1252")
-    user_data = pd.read_csv("data/user.csv", encoding="Windows-1252")
+    user_data = pd.read_csv("user.csv", encoding="Windows-1252")
     return tourism_rating, tourism_with_id, user_data
 
 tourism_rating, tourism_with_id, user_data = load_data()
@@ -37,7 +37,7 @@ def compute_similarity(data):
 cosine_sim, indices = compute_similarity(merged_data)
 
 # Content-Based Recommendation
-def content_based_recommendation(data, title, n=5):
+def content_based_recommendation(data, title, min_price=None, max_price=None, min_rating=None, n=5):
     if title not in indices:
         st.error(f"The place '{title}' is not found in the dataset!")
         return pd.DataFrame()
@@ -48,20 +48,23 @@ def content_based_recommendation(data, title, n=5):
     idx = int(idx)
 
     sim_scores = cosine_sim[idx].flatten()
-    sim_scores = [(i, score) for i, score in enumerate(sim_scores)]
+    sim_scores = [(i, score) for i, score in enumerate(sim_scores) if i != idx]
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[:n]
 
     place_indices = [i[0] for i in sim_scores]
-    recommendations = data.iloc[place_indices][['Place_Name', 'Category', 'City', 'Rating', 'Description']]
+    recommendations = data.iloc[place_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
 
-    # Place the input place at the bottom of the recommendations if it exists
-    recommendations = recommendations[recommendations['Place_Name'] != title]
-    if len(recommendations) < n:
-        recommendations = pd.concat([recommendations, data[data['Place_Name'] == title]])
-    return recommendations.head(n)
+    if min_price:
+        recommendations = recommendations[recommendations['Price'] >= min_price]
+    if max_price:
+        recommendations = recommendations[recommendations['Price'] <= max_price]
+    if min_rating:
+        recommendations = recommendations[recommendations['Rating'] >= min_rating]
 
+    return recommendations
 
-def collaborative_filtering(data, user_id, n=5):
+# Collaborative Filtering
+def collaborative_filtering(data, user_id, min_price=None, max_price=None, min_rating=None, n=5):
     reader = Reader(rating_scale=(0.5, 5))
     rating_data = data[['User_Id', 'Place_Id', 'Place_Ratings']]
     dataset = Dataset.load_from_df(rating_data, reader)
@@ -76,14 +79,22 @@ def collaborative_filtering(data, user_id, n=5):
 
     visited_places = data[data['User_Id'] == user_id]['Place_Id'].tolist()
     all_places = data['Place_Id'].unique()
+    unvisited_places = [place for place in all_places if place not in visited_places]
 
-    # Include both visited and unvisited places for recommendations
-    predictions = [(place, svd.predict(user_id, place).est) for place in all_places]
+    predictions = [(place, svd.predict(user_id, place).est) for place in unvisited_places]
     predictions = sorted(predictions, key=lambda x: x[1], reverse=True)[:n]
 
     recommended_places = [place[0] for place in predictions]
-    return tourism_with_id[tourism_with_id['Place_Id'].isin(recommended_places)][['Place_Name', 'Category', 'City', 'Rating', 'Description']]
+    recommendations = tourism_with_id[tourism_with_id['Place_Id'].isin(recommended_places)][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
 
+    if min_price:
+        recommendations = recommendations[recommendations['Price'] >= min_price]
+    if max_price:
+        recommendations = recommendations[recommendations['Price'] <= max_price]
+    if min_rating:
+        recommendations = recommendations[recommendations['Rating'] >= min_rating]
+
+    return recommendations
 
 # Simple Recommendation
 def simple_recommender(data, category=None, min_price=None, max_price=None, min_rating=None, min_reviews=None, n=5):
@@ -142,25 +153,39 @@ if selected_model == "Simple Recommendation":
 elif selected_model == "Content-Based Filtering":
     st.subheader("Content-Based Recommendations")
     selected_place = st.selectbox("Select a Place (Required):", merged_data['Place_Name'].unique())
+    min_price = st.number_input("Minimum Price (Optional):", min_value=0, step=1, value=0)
+    max_price = st.number_input("Maximum Price (Optional):", min_value=0, step=1, value=0)
+    min_rating = st.slider("Minimum Rating (Optional):", min_value=0.0, max_value=5.0, step=0.1, value=0.0)
     num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
 
     if st.button("Recommend Based on Content"):
-        recommendations = content_based_recommendation(merged_data, selected_place, num_recommendations)
-        if recommendations.empty:
-            st.warning("No recommendations found. Please select another place or adjust the number of recommendations.")
-        else:
-            st.write("Here are the top recommended places:")
-            st.dataframe(recommendations)
+        recommendations = content_based_recommendation(
+            merged_data,
+            title=selected_place,
+            min_price=min_price if min_price > 0 else None,
+            max_price=max_price if max_price > 0 else None,
+            min_rating=min_rating if min_rating > 0 else None,
+            n=num_recommendations
+        )
+        st.write("Here are the top recommended places:")
+        st.dataframe(recommendations)
 
 elif selected_model == "Collaborative Filtering":
     st.subheader("Collaborative Recommendations")
     user_id = st.number_input("Enter User ID:", min_value=1, step=1)
+    min_price = st.number_input("Minimum Price (Optional):", min_value=0, step=1, value=0)
+    max_price = st.number_input("Maximum Price (Optional):", min_value=0, step=1, value=0)
+    min_rating = st.slider("Minimum Rating (Optional):", min_value=0.0, max_value=5.0, step=0.1, value=0.0)
     num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
 
     if st.button("Recommend Based on User Ratings"):
-        recommendations = collaborative_filtering(tourism_rating, user_id, num_recommendations)
-        if recommendations.empty:
-            st.warning("No recommendations found. Please enter a valid User ID or try with a different number of recommendations.")
-        else:
-            st.write("Here are the top recommendations based on your preferences:")
-            st.dataframe(recommendations)
+        recommendations = collaborative_filtering(
+            tourism_rating,
+            user_id,
+            min_price=min_price if min_price > 0 else None,
+            max_price=max_price if max_price > 0 else None,
+            min_rating=min_rating if min_rating > 0 else None,
+            n=num_recommendations
+        )
+        st.write("Here are the top recommendations based on your preferences:")
+        st.dataframe(recommendations)
