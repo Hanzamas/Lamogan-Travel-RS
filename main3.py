@@ -66,8 +66,12 @@ def content_based_recommendation(data, title, min_price=None, max_price=None, mi
     sim_scores = [(i, score) for i, score in enumerate(sim_scores) if i != idx and data.iloc[i]['Category'] == selected_category]
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[:n]
 
-    place_indices = [i[0] for i in sim_scores]
-    recommendations = filtered_data.iloc[place_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
+    # Map global indices to local indices in filtered_data
+    global_indices = [i[0] for i in sim_scores]
+    local_indices = filtered_data.index.intersection(global_indices).tolist()
+
+    # Get recommendations
+    recommendations = filtered_data.loc[local_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
 
     # Apply additional filters
     if min_price:
