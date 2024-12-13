@@ -4,27 +4,32 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from surprise import SVD, Dataset, Reader
 
+
 # Load datasets
 @st.cache
 def load_data():
-    tourism_rating = pd.read_csv("data/tourism_rating.csv", encoding="Windows-1252")
-    tourism_with_id = pd.read_csv("data/tourism_with_id.csv", encoding="Windows-1252")
-    user_data = pd.read_csv("data/user.csv", encoding="Windows-1252")
+    tourism_rating = pd.read_csv("tourism_rating.csv", encoding="latin1")
+    tourism_with_id = pd.read_csv("tourism_with_id.csv", encoding="latin1")
+    user_data = pd.read_csv("user.csv", encoding="latin1")
     return tourism_rating, tourism_with_id, user_data
+
 
 tourism_rating, tourism_with_id, user_data = load_data()
 
 # Merge data for analysis
 merged_data = pd.merge(tourism_rating, tourism_with_id, on="Place_Id")
 
+
 # Prepare content for content-based filtering
 @st.cache
 def prepare_content_data(data):
-    data['content'] = data[['Place_Name', 'Category', 'City', 'Description']].fillna('').apply(lambda x: ' '.join(x), axis=1)
+    data['content'] = data[['Place_Name', 'Category', 'City', 'Description']].fillna('').apply(lambda x: ' '.join(x),
+                                                                                               axis=1)
     tfidf = TfidfVectorizer(stop_words='english')
     tfidf_matrix = tfidf.fit_transform(data['content'])
     cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
     return cosine_sim, pd.Series(data.index, index=data['Place_Name'])
+
 
 cosine_sim, indices = prepare_content_data(merged_data)
 
@@ -47,6 +52,7 @@ selected_factors = st.sidebar.multiselect(
     default=["Rating"],
     disabled=(selected_page != "Recommendation System")
 )
+
 
 # Recommendation functions
 def recommend_simple(data, factors):
@@ -76,36 +82,41 @@ def recommend_simple(data, factors):
         data = data[data["Transportasi"].str.contains("|".join(transport_options), na=False)]
     return data.head(10)
 
+
 def content_based_recommendation(data, title, n=5):
+    # Pastikan judul tersedia
     if title not in indices:
-        st.error("Selected place not found in the dataset!")
+        st.error(f"The place '{title}' is not found in the dataset!")
         return pd.DataFrame()
-    idx = indices[title]
-    sim_scores = cosine_sim[idx].flatten()  # Pastikan array 1D
-    sim_scores = [(i, score) for i, score in enumerate(sim_scores)]  # Buat list pasangan indeks dan skor
+
+    idx = indices[title]  # Ambil indeks tempat
+    sim_scores = cosine_sim[idx].flatten()  # Pastikan skor kesamaan adalah array 1D
+    sim_scores = [(i, score) for i, score in enumerate(sim_scores)]  # Pasangkan indeks dan skor
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)  # Urutkan berdasarkan skor
-    sim_scores = sim_scores[1:n+1]  # Ambil N skor tertinggi setelah elemen pertama
+    sim_scores = sim_scores[1:n + 1]  # Ambil N tempat terbaik setelah elemen pertama (input)
+
     place_indices = [i[0] for i in sim_scores]
-    return data.iloc[place_indices][["Place_Name", "Category", "City", "Rating"]]
+    return data.iloc[place_indices][["Place_Name", "Category", "City", "Rating", "Description"]]
 
 
 def collaborative_filtering(data, user_id, n=5):
+    # Pastikan data sudah sesuai
     reader = Reader(rating_scale=(0.5, 5))
     rating_data = data[['User_Id', 'Place_Id', 'Place_Ratings']]
     dataset = Dataset.load_from_df(rating_data, reader)
+
+    # Latih model SVD
     svd = SVD()
     trainset = dataset.build_full_trainset()
     svd.fit(trainset)
 
+    # Prediksi semua tempat untuk pengguna
     all_places = data['Place_Id'].unique()
+    predictions = [(place, svd.predict(user_id, place).est) for place in all_places]
+    predictions = sorted(predictions, key=lambda x: x[1], reverse=True)[:n]  # Urutkan berdasarkan skor
 
-    predictions = [
-        (place, svd.predict(user_id, place).est) for place in all_places
-    ]
-    top_predictions = sorted(predictions, key=lambda x: x[1], reverse=True)[:n]
-
-    recommended_places = [place[0] for place in top_predictions]
-    return data[data['Place_Id'].isin(recommended_places)][["Place_Name", "Category", "City", "Rating"]]
+    recommended_places = [place[0] for place in predictions]
+    return data[data['Place_Id'].isin(recommended_places)][["Place_Name", "Category", "City", "Rating", "Description"]]
 
 
 # Data Statistics
@@ -163,6 +174,7 @@ if selected_page == "Recommendation System":
         selected_place = st.selectbox("Select a Place:", merged_data['Place_Name'].unique())
         if st.button("Recommend Based on Content"):
             recommendations = content_based_recommendation(merged_data, selected_place)
+            st.write("Here are the top recommended places:")
             st.dataframe(recommendations)
 
     elif selected_model == "Collaborative Filtering":
@@ -170,4 +182,5 @@ if selected_page == "Recommendation System":
         user_id = st.number_input("Enter User ID:", min_value=1, step=1)
         if st.button("Recommend Based on User Ratings"):
             recommendations = collaborative_filtering(merged_data, user_id)
+            st.write("Here are the top recommendations based on your preferences:")
             st.dataframe(recommendations)
