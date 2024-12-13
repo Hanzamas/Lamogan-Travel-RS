@@ -191,8 +191,8 @@ def collaborative_filtering_svd(data, user_id, n=5):
     trainset = dataset.build_full_trainset()
     svd.fit(trainset)
 
-    # Get visited places for the user
-    visited_places = data[data['User_Id'] == user_id]['Place_Id'].tolist()
+    # Get visited places (rating > 0) for the user
+    visited_places = data[(data['User_Id'] == user_id) & (data['Place_Ratings'] > 0)]['Place_Id'].tolist()
     all_places = data['Place_Id'].unique().tolist()
 
     # Handle cases where the user has visited all places
@@ -223,6 +223,7 @@ def collaborative_filtering_svd(data, user_id, n=5):
     recommended_place_ids = [place for place, _ in predictions]
     recommendations = tourism_with_id[tourism_with_id['Place_Id'].isin(recommended_place_ids)]
     return recommendations[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']].head(n)
+
 
 import tensorflow as tf
 from tensorflow.keras import layers
