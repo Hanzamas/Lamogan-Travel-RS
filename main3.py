@@ -26,8 +26,9 @@ tourism_rating, tourism_with_id, user_data = load_data()
 def preprocess_data():
     tourism_with_id['Jumlah Ulasan'] = tourism_with_id['Jumlah Ulasan'].str.replace(',', '').astype(int)
     merged_data = pd.merge(tourism_rating, tourism_with_id, on="Place_Id")
-    merged_data['content'] = merged_data[['Description', 'Category', 'Fasilitas']].fillna('').apply(
-        lambda x: ' '.join(map(str, x)), axis=1)
+    merged_data['content'] = merged_data[
+        ['Place_Name', 'Description', 'Category', 'City', 'Price', 'Rating', 'Fasilitas']
+    ].fillna('').apply(lambda x: ' '.join(map(str, x)), axis=1)
     return merged_data
 
 merged_data = preprocess_data()
@@ -63,20 +64,17 @@ def content_based_recommendation(data, title, min_price=None, max_price=None, mi
     # Compute similarity
     sim_scores = cosine_sim[idx].flatten()
     sim_scores = [(i, score) for i, score in enumerate(sim_scores) if i != idx and data.iloc[i]['Category'] == selected_category]
-    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[:n * 3]
-
+    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[:n]
 
     # Map global indices to local indices in filtered_data
     global_indices = [i[0] for i in sim_scores]
     local_indices = filtered_data.index.intersection(global_indices).tolist()
 
     # Get recommendations
-    # recommendations = filtered_data.loc[local_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
-    # Get recommendations
-    recommendations = filtered_data.loc[local_indices][
-        ['Category', 'Fasilitas', 'Description']]
-    # # Exclude the selected place from recommendations by name
-    # recommendations = recommendations[recommendations['Place_Name'] != title]
+    recommendations = filtered_data.loc[local_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
+
+    # Exclude the selected place from recommendations by name
+    recommendations = recommendations[recommendations['Place_Name'] != title]
 
     # Apply additional filters
     if min_price:
