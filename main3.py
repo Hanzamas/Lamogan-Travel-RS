@@ -52,7 +52,7 @@ def content_based_recommendation(data, title, n=5):
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[:n]
 
     place_indices = [i[0] for i in sim_scores]
-    recommendations = data.iloc[place_indices][['Place_Name', 'Category', 'City', 'Rating', 'Description']]
+    recommendations = data.iloc[place_indices][['Place_Name', 'Category', 'Rating', 'Description']]
 
     # Remove input place from recommendations explicitly
     recommendations = recommendations[recommendations['Place_Name'] != title]
