@@ -3,6 +3,7 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from surprise import SVD, Dataset, Reader
+import matplotlib.pyplot as plt
 
 # Load datasets
 @st.cache
@@ -112,80 +113,123 @@ def simple_recommender(data, category=None, min_price=None, max_price=None, min_
     data = data.sort_values(by='Rating', ascending=False)
     return data[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Jumlah Ulasan']].head(n)
 
+# Statistics Page
+def display_statistics():
+    st.title("Statistics and Insights")
+
+    # Basic statistics for tourism_with_id
+    st.subheader("Basic Statistics for Tourism Data")
+    st.write(tourism_with_id.describe())
+
+    # Distribution of Categories
+    st.subheader("Category Distribution")
+    category_counts = tourism_with_id['Category'].value_counts()
+    st.bar_chart(category_counts)
+
+    # Distribution of Ratings
+    st.subheader("Rating Distribution")
+    fig, ax = plt.subplots()
+    tourism_with_id['Rating'].hist(bins=10, ax=ax, grid=False)
+    ax.set_title("Distribution of Ratings")
+    ax.set_xlabel("Rating")
+    ax.set_ylabel("Frequency")
+    st.pyplot(fig)
+
+    # City-wise Distribution
+    st.subheader("City-wise Place Distribution")
+    city_counts = tourism_with_id['City'].value_counts()
+    st.bar_chart(city_counts)
+
+    # Price vs Rating Scatterplot
+    st.subheader("Price vs Rating")
+    fig, ax = plt.subplots()
+    tourism_with_id.plot.scatter(x='Price', y='Rating', alpha=0.5, ax=ax)
+    ax.set_title("Price vs Rating")
+    ax.set_xlabel("Price")
+    ax.set_ylabel("Rating")
+    st.pyplot(fig)
+
 # Streamlit UI
-st.title("Travel Recommendation System")
-st.sidebar.header("Recommendation Options")
-selected_model = st.sidebar.selectbox(
-    "Select Recommendation Model:",
-    ["Simple Recommendation", "Content-Based Filtering", "Collaborative Filtering"]
-)
+st.sidebar.title("Navigation")
+page = st.sidebar.radio("Go to:", ["Recommendation System", "Statistics"])
 
-if selected_model == "Simple Recommendation":
-    st.subheader("Simple Recommendations")
+if page == "Recommendation System":
+    st.title("Travel Recommendation System")
+    st.sidebar.header("Recommendation Options")
+    selected_model = st.sidebar.selectbox(
+        "Select Recommendation Model:",
+        ["Simple Recommendation", "Content-Based Filtering", "Collaborative Filtering"]
+    )
 
-    # Tambahkan filter kategori dan parameter lainnya
-    category_options = tourism_with_id['Category'].unique()
-    selected_category = st.selectbox("Select a Category (Optional):", [None] + list(category_options))
+    if selected_model == "Simple Recommendation":
+        st.subheader("Simple Recommendations")
 
-    min_price = st.number_input("Minimum Price (Optional):", min_value=0, step=1, value=0)
-    max_price = st.number_input("Maximum Price (Optional):", min_value=0, step=1, value=0)
-    if max_price == 0:
-        max_price = None  # Tidak ada batas atas harga jika tidak diatur
+        # Tambahkan filter kategori dan parameter lainnya
+        category_options = tourism_with_id['Category'].unique()
+        selected_category = st.selectbox("Select a Category (Optional):", [None] + list(category_options))
 
-    min_rating = st.slider("Minimum Rating (Optional):", min_value=0.0, max_value=5.0, step=0.1, value=0.0)
-    min_reviews = st.number_input("Minimum Number of Reviews (Optional):", min_value=0, step=1, value=0)
+        min_price = st.number_input("Minimum Price (Optional):", min_value=0, step=1, value=0)
+        max_price = st.number_input("Maximum Price (Optional):", min_value=0, step=1, value=0)
+        if max_price == 0:
+            max_price = None  # Tidak ada batas atas harga jika tidak diatur
 
-    num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
+        min_rating = st.slider("Minimum Rating (Optional):", min_value=0.0, max_value=5.0, step=0.1, value=0.0)
+        min_reviews = st.number_input("Minimum Number of Reviews (Optional):", min_value=0, step=1, value=0)
 
-    if st.button("Get Recommendations"):
-        recommendations = simple_recommender(
-            tourism_with_id,
-            category=selected_category,
-            min_price=min_price if min_price > 0 else None,
-            max_price=max_price,
-            min_rating=min_rating if min_rating > 0 else None,
-            min_reviews=min_reviews if min_reviews > 0 else None,
-            n=num_recommendations
-        )
-        st.write("Here are the top recommended places:")
-        st.dataframe(recommendations)
+        num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
 
-elif selected_model == "Content-Based Filtering":
-    st.subheader("Content-Based Recommendations")
-    selected_place = st.selectbox("Select a Place (Required):", merged_data['Place_Name'].unique())
-    min_price = st.number_input("Minimum Price (Optional):", min_value=0, step=1, value=0)
-    max_price = st.number_input("Maximum Price (Optional):", min_value=0, step=1, value=0)
-    min_rating = st.slider("Minimum Rating (Optional):", min_value=0.0, max_value=5.0, step=0.1, value=0.0)
-    num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
+        if st.button("Get Recommendations"):
+            recommendations = simple_recommender(
+                tourism_with_id,
+                category=selected_category,
+                min_price=min_price if min_price > 0 else None,
+                max_price=max_price,
+                min_rating=min_rating if min_rating > 0 else None,
+                min_reviews=min_reviews if min_reviews > 0 else None,
+                n=num_recommendations
+            )
+            st.write("Here are the top recommended places:")
+            st.dataframe(recommendations)
 
-    if st.button("Recommend Based on Content"):
-        recommendations = content_based_recommendation(
-            merged_data,
-            title=selected_place,
-            min_price=min_price if min_price > 0 else None,
-            max_price=max_price if max_price > 0 else None,
-            min_rating=min_rating if min_rating > 0 else None,
-            n=num_recommendations
-        )
-        st.write("Here are the top recommended places:")
-        st.dataframe(recommendations)
+    elif selected_model == "Content-Based Filtering":
+        st.subheader("Content-Based Recommendations")
+        selected_place = st.selectbox("Select a Place (Required):", merged_data['Place_Name'].unique())
+        min_price = st.number_input("Minimum Price (Optional):", min_value=0, step=1, value=0)
+        max_price = st.number_input("Maximum Price (Optional):", min_value=0, step=1, value=0)
+        min_rating = st.slider("Minimum Rating (Optional):", min_value=0.0, max_value=5.0, step=0.1, value=0.0)
+        num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
 
-elif selected_model == "Collaborative Filtering":
-    st.subheader("Collaborative Recommendations")
-    user_id = st.number_input("Enter User ID:", min_value=1, step=1)
-    min_price = st.number_input("Minimum Price (Optional):", min_value=0, step=1, value=0)
-    max_price = st.number_input("Maximum Price (Optional):", min_value=0, step=1, value=0)
-    min_rating = st.slider("Minimum Rating (Optional):", min_value=0.0, max_value=5.0, step=0.1, value=0.0)
-    num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
+        if st.button("Recommend Based on Content"):
+            recommendations = content_based_recommendation(
+                merged_data,
+                title=selected_place,
+                min_price=min_price if min_price > 0 else None,
+                max_price=max_price if max_price > 0 else None,
+                min_rating=min_rating if min_rating > 0 else None,
+                n=num_recommendations
+            )
+            st.write("Here are the top recommended places:")
+            st.dataframe(recommendations)
 
-    if st.button("Recommend Based on User Ratings"):
-        recommendations = collaborative_filtering(
-            tourism_rating,
-            user_id,
-            min_price=min_price if min_price > 0 else None,
-            max_price=max_price if max_price > 0 else None,
-            min_rating=min_rating if min_rating > 0 else None,
-            n=num_recommendations
-        )
-        st.write("Here are the top recommendations based on your preferences:")
-        st.dataframe(recommendations)
+    elif selected_model == "Collaborative Filtering":
+        st.subheader("Collaborative Recommendations")
+        user_id = st.number_input("Enter User ID:", min_value=1, step=1)
+        min_price = st.number_input("Minimum Price (Optional):", min_value=0, step=1, value=0)
+        max_price = st.number_input("Maximum Price (Optional):", min_value=0, step=1, value=0)
+        min_rating = st.slider("Minimum Rating (Optional):", min_value=0.0, max_value=5.0, step=0.1, value=0.0)
+        num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
+
+        if st.button("Recommend Based on User Ratings"):
+            recommendations = collaborative_filtering(
+                tourism_rating,
+                user_id,
+                min_price=min_price if min_price > 0 else None,
+                max_price=max_price if max_price > 0 else None,
+                min_rating=min_rating if min_rating > 0 else None,
+                n=num_recommendations
+            )
+            st.write("Here are the top recommendations based on your preferences:")
+            st.dataframe(recommendations)
+
+elif page == "Statistics":
+    display_statistics()
