@@ -47,7 +47,7 @@ cosine_sim, indices = compute_similarity(merged_data)
 # Content-Based Recommendation
 # With enhanced relevance
 
-def content_based_recommendation(data, title,  n=5):
+def content_based_recommendation(data, title, n=5):
     if title not in indices:
         st.error(f"The place '{title}' is not found in the dataset!")
         return pd.DataFrame()
@@ -57,19 +57,24 @@ def content_based_recommendation(data, title,  n=5):
         idx = idx.iloc[0]
     idx = int(idx)
 
-    # Filter by category of the selected place
+    # Filter berdasarkan kategori tempat yang dipilih
     selected_category = data.loc[idx, 'Category']
     filtered_data = data[data['Category'] == selected_category]
 
-    # Compute similarity
+    # Hitung kemiripan
     sim_scores = cosine_sim[idx].flatten()
     sim_scores = [(i, score) for i, score in enumerate(sim_scores) if i != idx and data.iloc[i]['Category'] == selected_category]
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[:n]
 
-    place_indices = [i[0] for i in sim_scores]
-    recommendations = filtered_data.iloc[place_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
+    # Peta indeks global ke indeks lokal di `filtered_data`
+    global_indices = [i[0] for i in sim_scores]
+    local_indices = filtered_data.index.intersection(global_indices)
+
+    # Dapatkan rekomendasi berdasarkan indeks lokal
+    recommendations = filtered_data.loc[local_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
 
     return recommendations
+
 
 
 # Collaborative Filtering
