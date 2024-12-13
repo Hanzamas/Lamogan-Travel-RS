@@ -6,6 +6,7 @@ from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFacto
 from sklearn.feature_extraction.text import CountVectorizer
 from tensorflow.keras.models import load_model
 from tensorflow import keras
+from surprise import SVD, Dataset, Reader
 import numpy as np
 
 # Buat daftar stop words bahasa Indonesia menggunakan Sastrawi
@@ -177,6 +178,52 @@ def collaborative_filtering_with_model(data, user_id, model, n=5):
         st.error(f"Error in collaborative filtering: {e}")
         return pd.DataFrame()
 
+
+# Collaborative Filtering with SVD
+def collaborative_filtering_svd(data, user_id, n=5):
+    # Prepare the dataset for SVD
+    reader = Reader(rating_scale=(0.5, 5))
+    filtered_data = data[data['Place_Ratings'] > 0]  # Exclude ratings of 0
+    dataset = Dataset.load_from_df(filtered_data[['User_Id', 'Place_Id', 'Place_Ratings']], reader)
+
+    # Train the SVD model
+    svd = SVD()
+    trainset = dataset.build_full_trainset()
+    svd.fit(trainset)
+
+    # Get visited places for the user
+    visited_places = data[data['User_Id'] == user_id]['Place_Id'].tolist()
+    all_places = data['Place_Id'].unique().tolist()
+
+    # Handle cases where the user has visited all places
+    if not set(all_places) - set(visited_places):
+        st.warning(f"User {user_id} has visited all available places.")
+        st.info("Recommending the top places from visited ones based on preferences.")
+
+        visited_encoded = [place for place in visited_places]
+        user_place_array = [[user_id, place] for place in visited_encoded]
+
+        # Predict ratings for visited places
+        ratings = [svd.predict(user_id, place).est for user_id, place in user_place_array]
+
+        # Get top N recommendations from visited places
+        top_ratings_indices = sorted(range(len(ratings)), key=lambda i: ratings[i], reverse=True)[:n]
+        recommended_place_ids = [visited_encoded[i] for i in top_ratings_indices]
+
+        # Fetch and display recommended places
+        recommendations = tourism_with_id[tourism_with_id['Place_Id'].isin(recommended_place_ids)]
+        return recommendations[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']].head(n)
+
+    # Handle unvisited places
+    unvisited_places = list(set(all_places) - set(visited_places))
+    predictions = [(place, svd.predict(user_id, place).est) for place in unvisited_places]
+    predictions = sorted(predictions, key=lambda x: x[1], reverse=True)[:n]
+
+    # Get the recommended places
+    recommended_place_ids = [place for place, _ in predictions]
+    recommendations = tourism_with_id[tourism_with_id['Place_Id'].isin(recommended_place_ids)]
+    return recommendations[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']].head(n)
+
 import tensorflow as tf
 from tensorflow.keras import layers
 
@@ -329,7 +376,7 @@ if page == "Recommendation System":
     st.sidebar.header("Recommendation Options")
     selected_model = st.sidebar.selectbox(
         "Select Recommendation Model:",
-        ["Simple Recommendation", "Content-Based Filtering", "Collaborative Filtering"]
+        ["Simple Recommendation", "Content-Based Filtering", "Collaborative Filtering", "Collaborative Filtering SVD"]
     )
 
     if selected_model == "Simple Recommendation":
@@ -414,6 +461,21 @@ if page == "Recommendation System":
             st.write("Recommended Places:")
 
             st.dataframe(recommendations)
+
+    if page == "Collaborative Filtering SVD":
+        st.title("Collaborative Filtering with SVD")
+
+        # User input for User ID
+        user_id = st.number_input("Enter User ID:", min_value=1, step=1)
+        num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
+
+        if st.button("Recommend Based on Collaborative Filtering"):
+            if user_id not in tourism_rating['User_Id'].unique():
+                st.error(f"User ID {user_id} is not found in the dataset!")
+            else:
+                recommendations = collaborative_filtering_svd(tourism_rating, user_id, n=num_recommendations)
+                st.write("Here are the recommendations based on your preferences:")
+                st.dataframe(recommendations)
 
 
 
