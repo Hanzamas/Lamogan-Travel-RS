@@ -75,8 +75,10 @@ def collaborative_filtering(data, user_id, n=5):
     recommended_places = [place[0] for place in predictions]
     return data[data['Place_Id'].isin(recommended_places)][['Place_Name', 'Category', 'City', 'Rating', 'Description']]
 
-# Simple Recommendation
-def simple_recommender(data, n=5):
+#Simple Recommendation
+def simple_recommender(data, category=None, n=5):
+    if category:
+        data = data[data['Category'] == category]  # Filter berdasarkan kategori
     data = data.sort_values(by='Rating', ascending=False)
     return data[['Place_Name', 'Category', 'City', 'Rating', 'Price']].head(n)
 
@@ -88,11 +90,22 @@ selected_model = st.sidebar.selectbox(
     ["Simple Recommendation", "Content-Based Filtering", "Collaborative Filtering"]
 )
 
+# Streamlit UI
 if selected_model == "Simple Recommendation":
     st.subheader("Simple Recommendations")
+
+    # Tambahkan filter kategori
+    category_options = tourism_with_id['Category'].unique()
+    selected_category = st.selectbox("Select a Category (Optional):", ["All"] + list(category_options))
+
     num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
+
     if st.button("Get Recommendations"):
-        recommendations = simple_recommender(tourism_with_id, num_recommendations)
+        if selected_category == "All":
+            recommendations = simple_recommender(tourism_with_id, n=num_recommendations)
+        else:
+            recommendations = simple_recommender(tourism_with_id, category=selected_category, n=num_recommendations)
+
         st.write("Here are the top recommended places:")
         st.dataframe(recommendations)
 
