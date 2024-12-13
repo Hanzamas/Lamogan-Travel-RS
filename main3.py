@@ -301,6 +301,24 @@ def simple_recommender(data, category=None, min_price=None, max_price=None, min_
     data = data.sort_values(by='Rating', ascending=False)
     return data[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Jumlah Ulasan']].head(n)
 
+def compute_top_places(data, n=10):
+    # Calculate the mean rating across all places
+    C = data['Rating'].mean()
+
+    # Calculate the 75th percentile of the number of reviews
+    m = data['Jumlah Ulasan'].quantile(0.75)
+
+    # Filter places with at least `m` reviews
+    qualified = data[data['Jumlah Ulasan'] >= m]
+
+    # Calculate the weighted score
+    qualified['score'] = (qualified['Jumlah Ulasan'] / (qualified['Jumlah Ulasan'] + m) * qualified['Rating']) + \
+                         (m / (qualified['Jumlah Ulasan'] + m) * C)
+
+    # Sort by score and return the top n places
+    top_places = qualified.sort_values('score', ascending=False).head(n)
+    return top_places[['Place_Name', 'Category', 'City', 'Rating', 'Jumlah Ulasan', 'score']]
+
 # Display User Table
 def display_user_table():
     st.subheader("User Information")
@@ -494,7 +512,6 @@ elif page == "Top 10 Best Places":
     st.title("Top 10 Best Places to Visit")
 
     # Compute the top 10 places based on ratings and the number of reviews
-    top_places = tourism_with_id.sort_values(by=['Rating', 'Jumlah Ulasan'], ascending=[False, False]).head(10)
-
-    st.subheader("Here are the top 10 best-rated places by Ratings and Review:")
-    st.dataframe(top_places[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Jumlah Ulasan']])
+    top_places = compute_top_places(tourism_with_id)
+    st.write("Top 10 Best Places (Weighted):")
+    st.dataframe(top_places)
