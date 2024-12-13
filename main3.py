@@ -13,9 +13,9 @@ indonesian_stop_words = factory.get_stop_words()
 # Load datasets
 @st.cache_data
 def load_data():
-    tourism_rating = pd.read_csv("data/tourism_rating.csv", encoding="Windows-1252")
-    tourism_with_id = pd.read_csv("data/tourism_with_id.csv", encoding="Windows-1252")
-    user_data = pd.read_csv("data/user.csv", encoding="Windows-1252")
+    tourism_rating = pd.read_csv("data/tourism_rating.csv", encoding="ascii")
+    tourism_with_id = pd.read_csv("data/tourism_with_id.csv", encoding="Johab")
+    user_data = pd.read_csv("data/user.csv", encoding="ascii")
     return tourism_rating, tourism_with_id, user_data
 
 tourism_rating, tourism_with_id, user_data = load_data()
