@@ -22,16 +22,22 @@ def load_data():
 
 tourism_rating, tourism_with_id, user_data = load_data()
 
+
 # Clean and preprocess data
 def preprocess_data():
     tourism_with_id['Jumlah Ulasan'] = tourism_with_id['Jumlah Ulasan'].str.replace(',', '').astype(int)
     merged_data = pd.merge(tourism_rating, tourism_with_id, on="Place_Id")
+
+    # Create 'content' column using relevant fields
     merged_data['content'] = merged_data[
-        ['Place_Name', 'Description', 'Category', 'City', 'Price', 'Rating', 'Fasilitas']
+        ['Description', 'Category', 'City', 'Fasilitas']
     ].fillna('').apply(lambda x: ' '.join(map(str, x)), axis=1)
+
     return merged_data
 
+
 merged_data = preprocess_data()
+
 
 # Compute TF-IDF and Cosine Similarity
 @st.cache
@@ -42,11 +48,12 @@ def compute_similarity(data):
     indices = pd.Series(data.index, index=data['Place_Name']).drop_duplicates()
     return cosine_sim, indices
 
+
 cosine_sim, indices = compute_similarity(merged_data)
+
 
 # Content-Based Recommendation
 # With enhanced relevance
-
 def content_based_recommendation(data, title, n=5):
     if title not in indices:
         st.error(f"The place '{title}' is not found in the dataset!")
@@ -57,21 +64,23 @@ def content_based_recommendation(data, title, n=5):
         idx = idx.iloc[0]
     idx = int(idx)
 
-    # Filter berdasarkan kategori tempat yang dipilih
+    # Filter by category of the selected place
     selected_category = data.loc[idx, 'Category']
     filtered_data = data[data['Category'] == selected_category]
 
-    # Hitung kemiripan
+    # Compute similarity
     sim_scores = cosine_sim[idx].flatten()
-    sim_scores = [(i, score) for i, score in enumerate(sim_scores) if i != idx and data.iloc[i]['Category'] == selected_category]
+    sim_scores = [(i, score) for i, score in enumerate(sim_scores) if
+                  i != idx and data.iloc[i]['Category'] == selected_category]
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[:n]
 
-    # Peta indeks global ke indeks lokal di `filtered_data`
+    # Map global indices to local indices in filtered_data
     global_indices = [i[0] for i in sim_scores]
-    local_indices = filtered_data.index.intersection(global_indices)
+    local_indices = filtered_data.index.intersection(global_indices).tolist()
 
-    # Dapatkan rekomendasi berdasarkan indeks lokal
-    recommendations = filtered_data.loc[local_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
+    # Get recommendations
+    recommendations = filtered_data.loc[local_indices][
+        ['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
 
     return recommendations
 
@@ -118,6 +127,7 @@ def simple_recommender(data, category=None, min_price=None, max_price=None, min_
 
     data = data.sort_values(by='Rating', ascending=False)
     return data[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Jumlah Ulasan']].head(n)
+
 
 
 def display_statistics():
@@ -228,33 +238,52 @@ if page == "Recommendation System":
             st.write("Here are the top recommended places:")
             st.dataframe(recommendations)
 
+
     elif selected_model == "Content-Based Filtering":
+
         st.subheader("Content-Based Recommendations")
+
         selected_place = st.selectbox("Select a Place (Required):", merged_data['Place_Name'].unique())
 
         num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
 
         if st.button("Recommend Based on Content"):
             recommendations = content_based_recommendation(
+
                 merged_data,
+
                 title=selected_place,
+
                 n=num_recommendations
+
             )
+
             st.write("Here are the top recommended places:")
+
             st.dataframe(recommendations)
 
+
     elif selected_model == "Collaborative Filtering":
+
         st.subheader("Collaborative Recommendations")
+
         user_id = st.number_input("Enter User ID:", min_value=1, step=1)
+
         num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
 
         if st.button("Recommend Based on User Ratings"):
             recommendations = collaborative_filtering(
+
                 tourism_rating,
+
                 user_id,
+
                 n=num_recommendations
+
             )
+
             st.write("Here are the top recommendations based on your preferences:")
+
             st.dataframe(recommendations)
 
 elif page == "Statistics":
