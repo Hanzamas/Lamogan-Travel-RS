@@ -6,6 +6,7 @@ from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFacto
 from sklearn.feature_extraction.text import CountVectorizer
 from tensorflow.keras.models import load_model
 from tensorflow import keras
+import numpy as np
 
 # Buat daftar stop words bahasa Indonesia menggunakan Sastrawi
 factory = StopWordRemoverFactory()
