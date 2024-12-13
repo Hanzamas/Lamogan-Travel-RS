@@ -64,25 +64,21 @@ def content_based_recommendation(data, title, n=5):
         idx = idx.iloc[0]
     idx = int(idx)
 
-    # Filter by category of the selected place
+    # Filter berdasarkan kategori tempat yang dipilih
     selected_category = data.loc[idx, 'Category']
     filtered_data = data[data['Category'] == selected_category]
 
-    # Compute similarity
+    # Hitung kemiripan
     sim_scores = cosine_sim[idx].flatten()
-    sim_scores = [(i, score) for i, score in enumerate(sim_scores) if
-                  i != idx and data.iloc[i]['Category'] == selected_category]
+    sim_scores = [(i, score) for i, score in enumerate(sim_scores) if i != idx and data.iloc[i]['Category'] == selected_category]
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[:n]
 
-    # Map global indices to local indices in filtered_data
-    global_indices = [i[0] for i in sim_scores]
-    local_indices = filtered_data.index.intersection(global_indices).tolist()
-
-    # Get recommendations
-    recommendations = filtered_data.loc[local_indices][
-        ['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
+    # Dapatkan rekomendasi
+    place_indices = [i[0] for i in sim_scores]
+    recommendations = filtered_data.loc[place_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
 
     return recommendations
+
 
 
 
@@ -111,6 +107,7 @@ def collaborative_filtering(data, user_id, n=5):
     recommendations = tourism_with_id[tourism_with_id['Place_Id'].isin(recommended_places)][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
 
     return recommendations
+
 
 # Simple Recommendation
 def simple_recommender(data, category=None, min_price=None, max_price=None, min_rating=None, min_reviews=None, n=5):
