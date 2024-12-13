@@ -1,11 +1,11 @@
 import streamlit as st
 import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from surprise import SVD, Dataset, Reader
 import matplotlib.pyplot as plt
 from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFactory
 from sklearn.feature_extraction.text import CountVectorizer
+from tensorflow.keras.models import load_model
+from tensorflow import keras
 
 # Buat daftar stop words bahasa Indonesia menggunakan Sastrawi
 factory = StopWordRemoverFactory()
@@ -17,7 +17,8 @@ def load_data():
     tourism_rating = pd.read_csv("data/tourism_rating.csv", encoding="ascii")
     tourism_with_id = pd.read_csv("data/tourism_with_id.csv", encoding="Johab")
     user_data = pd.read_csv("data/user.csv", encoding="ascii")
-    return tourism_rating, tourism_with_id, user_data,
+    return tourism_rating, tourism_with_id, user_data
+
 
 tourism_rating, tourism_with_id, user_data = load_data()
 
@@ -81,35 +82,107 @@ def content_based_recommendation(name, cosine_sim, items, n=5):
     return recommendations
 
 
-# Collaborative Filtering
-def collaborative_filtering(data, user_id, n=5):
-    reader = Reader(rating_scale=(0.5, 5))
-    rating_data = data[['User_Id', 'Place_Id', 'Place_Ratings']]
-    dataset = Dataset.load_from_df(rating_data, reader)
+# # Collaborative Filtering
+# def collaborative_filtering(data, user_id, n=5):
+#     reader = Reader(rating_scale=(0.5, 5))
+#     rating_data = data[['User_Id', 'Place_Id', 'Place_Ratings']]
+#     dataset = Dataset.load_from_df(rating_data, reader)
+#
+#     svd = SVD()
+#     trainset = dataset.build_full_trainset()
+#     svd.fit(trainset)
+#
+#     if user_id not in rating_data['User_Id'].unique():
+#         st.error(f"User ID {user_id} is not found in the dataset!")
+#         return pd.DataFrame()
+#
+#     visited_places = data[data['User_Id'] == user_id]['Place_Id'].tolist()
+#     all_places = data['Place_Id'].unique()
+#     unvisited_places = [place for place in all_places if place not in visited_places]
+#
+#     if not unvisited_places:
+#         fallback_recommendations = tourism_with_id.sort_values(by=['Rating', 'Jumlah Ulasan'], ascending=[False, False])
+#         return fallback_recommendations[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']].head(n)
+#
+#     predictions = [(place, svd.predict(user_id, place).est) for place in unvisited_places]
+#     predictions = sorted(predictions, key=lambda x: x[1], reverse=True)[:n]
+#
+#     recommended_places = [place[0] for place in predictions]
+#     recommendations = tourism_with_id[tourism_with_id['Place_Id'].isin(recommended_places)][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
+#
+#     return recommendations
 
-    svd = SVD()
-    trainset = dataset.build_full_trainset()
-    svd.fit(trainset)
+# Updated Collaborative Filtering Function
+def collaborative_filtering_with_model(data, user_id, model, n=5):
+    try:
+        # Ensure user_id exists in the dataset
+        user_ids = data.User_Id.unique().tolist()
+        place_ids = data.Place_Id.unique().tolist()
+        user_to_user_encoded = {x: i for i, x in enumerate(user_ids)}
+        place_to_place_encoded = {x: i for i, x in enumerate(place_ids)}
+        place_encoded_to_place = {i: x for x, i in enumerate(place_ids)}
 
-    if user_id not in rating_data['User_Id'].unique():
-        st.error(f"User ID {user_id} is not found in the dataset!")
+        if user_id not in user_to_user_encoded:
+            st.error(f"User ID {user_id} not found in the dataset!")
+            return pd.DataFrame()
+
+        user_encoder = user_to_user_encoded[user_id]
+        places_visited_by_user = data[data['User_Id'] == user_id]['Place_Id'].tolist()
+        unvisited_places = list(set(place_ids) - set(places_visited_by_user))
+
+        if not unvisited_places:
+            # User has visited all places
+            st.warning(f"User {user_id} has visited all available places.")
+            st.info("Recommending the top places from visited ones based on preferences.")
+
+            # Prepare data for places already visited
+            visited_encoded = [[place_to_place_encoded.get(x)] for x in places_visited_by_user]
+            user_place_array = np.hstack(([[user_encoder]] * len(visited_encoded), visited_encoded))
+
+            # Predict ratings for visited places
+            ratings = model.predict(user_place_array).flatten()
+
+            # Get top N recommendations from visited places
+            top_ratings_indices = ratings.argsort()[-n:][::-1]
+            recommended_place_ids = [
+                place_encoded_to_place.get(visited_encoded[x][0]) for x in top_ratings_indices
+            ]
+
+            # Fetch and display recommended places
+            recommendations = tourism_with_id[tourism_with_id['Place_Id'].isin(recommended_place_ids)]
+            return recommendations[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']].head(n)
+
+        # Standard recommendation flow for unvisited places
+        unvisited_encoded = [[place_to_place_encoded.get(x)] for x in unvisited_places]
+        user_place_array = np.hstack(([[user_encoder]] * len(unvisited_encoded), unvisited_encoded))
+
+        # Predict ratings for unvisited places
+        ratings = model.predict(user_place_array).flatten()
+
+        # Get top N recommendations for unvisited places
+        top_ratings_indices = ratings.argsort()[-n:][::-1]
+        recommended_place_ids = [
+            place_encoded_to_place.get(unvisited_encoded[x][0]) for x in top_ratings_indices
+        ]
+
+        # Fetch and display recommended places
+        recommendations = tourism_with_id[tourism_with_id['Place_Id'].isin(recommended_place_ids)]
+        return recommendations[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']].head(n)
+
+    except Exception as e:
+        st.error(f"Error in collaborative filtering: {e}")
         return pd.DataFrame()
 
-    visited_places = data[data['User_Id'] == user_id]['Place_Id'].tolist()
-    all_places = data['Place_Id'].unique()
-    unvisited_places = [place for place in all_places if place not in visited_places]
+# Load the pre-trained model
+@st.cache_resource
+def load_recommendation_model():
+    try:
+        return keras.models.load_model('model/recommender_net.h5')
+    except Exception as e:
+        st.error(f"Error loading model: {e}")
+        return None
 
-    if not unvisited_places:
-        fallback_recommendations = tourism_with_id.sort_values(by=['Rating', 'Jumlah Ulasan'], ascending=[False, False])
-        return fallback_recommendations[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']].head(n)
-
-    predictions = [(place, svd.predict(user_id, place).est) for place in unvisited_places]
-    predictions = sorted(predictions, key=lambda x: x[1], reverse=True)[:n]
-
-    recommended_places = [place[0] for place in predictions]
-    recommendations = tourism_with_id[tourism_with_id['Place_Id'].isin(recommended_places)][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
-
-    return recommendations
+model = load_recommendation_model()
 
 # Simple Recommendation
 def simple_recommender(data, category=None, min_price=None, max_price=None, min_rating=None, min_reviews=None, n=5):
@@ -255,21 +328,24 @@ if page == "Recommendation System":
             st.dataframe(recommendations)
 
 
+
     elif selected_model == "Collaborative Filtering":
 
         st.subheader("Collaborative Recommendations")
 
         user_id = st.number_input("Enter User ID:", min_value=1, step=1)
-        num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
 
-        if st.button("Recommend Based on User Ratings"):
-            recommendations = collaborative_filtering(
-                tourism_rating,
-                user_id,
-                n=num_recommendations
-            )
-            st.write("Here are the top recommendations based on your preferences:")
+        n_recommendations = st.slider("Number of Recommendations:", 1, 10, 5)
+
+        if model:
+
+            recommendations = collaborative_filtering_with_model(tourism_rating, user_id, model, n=n_recommendations)
+
             st.dataframe(recommendations)
+
+        else:
+
+            st.error("Model not loaded!")
 
 
 
