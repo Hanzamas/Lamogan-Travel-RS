@@ -29,7 +29,7 @@ def preprocess_data():
     merged_data['content'] = merged_data[
         ['Place_Name', 'Category', 'Description']
     ].fillna('').apply(lambda x: ' '.join(map(str, x)), axis=1)
-    print(merged_data['content'].head())
+
     return merged_data
 
 merged_data = preprocess_data()
@@ -41,8 +41,6 @@ def compute_similarity(data):
     tfidf_matrix = tfidf.fit_transform(data['content'])
     cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
     indices = pd.Series(data.index, index=data['Place_Name']).drop_duplicates()
-    print(indices.head())
-
     return cosine_sim, indices
 
 cosine_sim, indices = compute_similarity(merged_data)
@@ -65,8 +63,7 @@ def content_based_recommendation(data, title, n=5):
     # Ambil n tempat teratas
     place_indices = [i[0] for i in sim_scores[:n]]
     recommendations = data.iloc[place_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
-    sim_scores = list(enumerate(cosine_sim[idx]))
-    print(sim_scores[:10])
+
     return recommendations
 
 # Content-Based Filtering+
@@ -112,7 +109,6 @@ def collaborative_filtering(data, user_id, n=5):
     reader = Reader(rating_scale=(0.5, 5))
     rating_data = data[['User_Id', 'Place_Id', 'Place_Ratings']]
     dataset = Dataset.load_from_df(rating_data, reader)
-    print(rating_data.head())
 
     svd = SVD()
     trainset = dataset.build_full_trainset()
@@ -135,9 +131,6 @@ def collaborative_filtering(data, user_id, n=5):
 
     recommended_places = [place[0] for place in predictions]
     recommendations = tourism_with_id[tourism_with_id['Place_Id'].isin(recommended_places)][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
-    print("Unvisited Places:", unvisited_places)
-    for place, est in predictions:
-        print(f"Place ID: {place}, Predicted Rating: {est}")
 
     return recommendations
 
