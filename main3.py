@@ -74,18 +74,8 @@ def content_based_recommendation(data, title, min_price=None, max_price=None, mi
     recommendations = filtered_data.loc[local_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
 
     # Exclude the selected place from recommendations by name
-    # recommendations = recommendations[recommendations['Place_Name'] != title]
+    recommendations = recommendations[recommendations['Place_Name'] != title]
 
-    # Apply additional filters
-    if min_price:
-        recommendations = recommendations[recommendations['Price'] >= min_price]
-    if max_price:
-        recommendations = recommendations[recommendations['Price'] <= max_price]
-    if min_rating:
-        recommendations = recommendations[recommendations['Rating'] >= min_rating]
-
-    # Diversify results
-    recommendations = recommendations.groupby('Category').head(2)
 
     return recommendations
 
@@ -114,12 +104,6 @@ def collaborative_filtering(data, user_id, min_price=None, max_price=None, min_r
     recommended_places = [place[0] for place in predictions]
     recommendations = tourism_with_id[tourism_with_id['Place_Id'].isin(recommended_places)][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
 
-    if min_price:
-        recommendations = recommendations[recommendations['Price'] >= min_price]
-    if max_price:
-        recommendations = recommendations[recommendations['Price'] <= max_price]
-    if min_rating:
-        recommendations = recommendations[recommendations['Rating'] >= min_rating]
 
     return recommendations
 
@@ -251,18 +235,13 @@ if page == "Recommendation System":
     elif selected_model == "Content-Based Filtering":
         st.subheader("Content-Based Recommendations")
         selected_place = st.selectbox("Select a Place (Required):", merged_data['Place_Name'].unique())
-        min_price = st.number_input("Minimum Price (Optional):", min_value=0, step=1, value=0)
-        max_price = st.number_input("Maximum Price (Optional):", min_value=0, step=1, value=0)
-        min_rating = st.slider("Minimum Rating (Optional):", min_value=0.0, max_value=5.0, step=0.1, value=0.0)
+
         num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
 
         if st.button("Recommend Based on Content"):
             recommendations = content_based_recommendation(
                 merged_data,
                 title=selected_place,
-                min_price=min_price if min_price > 0 else None,
-                max_price=max_price if max_price > 0 else None,
-                min_rating=min_rating if min_rating > 0 else None,
                 n=num_recommendations
             )
             st.write("Here are the top recommended places:")
@@ -271,18 +250,12 @@ if page == "Recommendation System":
     elif selected_model == "Collaborative Filtering":
         st.subheader("Collaborative Recommendations")
         user_id = st.number_input("Enter User ID:", min_value=1, step=1)
-        min_price = st.number_input("Minimum Price (Optional):", min_value=0, step=1, value=0)
-        max_price = st.number_input("Maximum Price (Optional):", min_value=0, step=1, value=0)
-        min_rating = st.slider("Minimum Rating (Optional):", min_value=0.0, max_value=5.0, step=0.1, value=0.0)
         num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
 
         if st.button("Recommend Based on User Ratings"):
             recommendations = collaborative_filtering(
                 tourism_rating,
                 user_id,
-                min_price=min_price if min_price > 0 else None,
-                max_price=max_price if max_price > 0 else None,
-                min_rating=min_rating if min_rating > 0 else None,
                 n=num_recommendations
             )
             st.write("Here are the top recommendations based on your preferences:")
