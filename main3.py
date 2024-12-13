@@ -174,6 +174,52 @@ def collaborative_filtering_with_model(data, user_id, model, n=5):
         st.error(f"Error in collaborative filtering: {e}")
         return pd.DataFrame()
 
+import tensorflow as tf
+from tensorflow.keras import layers
+
+class RecommenderNet(tf.keras.Model):
+    def __init__(self, num_users, num_place, embedding_size, **kwargs):
+        super(RecommenderNet, self).__init__(**kwargs)
+        self.num_users = num_users
+        self.num_place = num_place
+        self.embedding_size = embedding_size
+        self.user_embedding = layers.Embedding(
+            num_users,
+            embedding_size,
+            embeddings_initializer="he_normal",
+            embeddings_regularizer=tf.keras.regularizers.l2(1e-6)
+        )
+        self.user_bias = layers.Embedding(num_users, 1)
+        self.place_embedding = layers.Embedding(
+            num_place,
+            embedding_size,
+            embeddings_initializer="he_normal",
+            embeddings_regularizer=tf.keras.regularizers.l2(1e-6)
+        )
+        self.place_bias = layers.Embedding(num_place, 1)
+
+    def call(self, inputs):
+        user_vector = self.user_embedding(inputs[:, 0])
+        user_bias = self.user_bias(inputs[:, 0])
+        place_vector = self.place_embedding(inputs[:, 1])
+        place_bias = self.place_bias(inputs[:, 1])
+
+        dot_user_place = tf.tensordot(user_vector, place_vector, 2)
+        x = dot_user_place + user_bias + place_bias
+        return tf.nn.sigmoid(x)
+
+    def get_config(self):
+        return {
+            "num_users": self.num_users,
+            "num_place": self.num_place,
+            "embedding_size": self.embedding_size,
+        }
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+
 # Load the pre-trained model
 @st.cache_resource
 def load_recommendation_model():
@@ -183,7 +229,7 @@ def load_recommendation_model():
             custom_objects={"RecommenderNet": RecommenderNet}
         )
     except Exception as e:
-        st.error(f"Error loading model: {e}")
+        print(f"Error loading model: {e}")
         return None
 
 model = load_recommendation_model()
