@@ -59,26 +59,38 @@ def content_based_recommendation(data, title, n=5):
         st.error(f"The place '{title}' is not found in the dataset!")
         return pd.DataFrame()
 
+    # Ambil indeks tempat yang dipilih
     idx = indices[title]
     if isinstance(idx, pd.Series):
         idx = idx.iloc[0]
     idx = int(idx)
 
-    # Filter berdasarkan kategori tempat yang dipilih
+    # Ambil kategori dari tempat yang dipilih
     selected_category = data.loc[idx, 'Category']
-    filtered_data = data[data['Category'] == selected_category]
 
-    # Hitung kemiripan
+    # Hitung skor kesamaan untuk semua tempat
     sim_scores = cosine_sim[idx].flatten()
-    sim_scores = [(i, score) for i, score in enumerate(sim_scores) if i != idx and data.iloc[i]['Category'] == selected_category]
-    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[:n]
 
-    # Dapatkan rekomendasi
-    place_indices = [i[0] for i in sim_scores]
-    recommendations = filtered_data.loc[place_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
+    # Buat DataFrame skor kemiripan
+    similarity_df = pd.DataFrame({
+        'index': range(len(sim_scores)),
+        'similarity': sim_scores
+    })
+
+    # Tambahkan informasi tempat ke DataFrame skor kemiripan
+    similarity_df = similarity_df.merge(data[['Place_Name', 'Category']], left_on='index', right_index=True)
+
+    # Filter tempat berdasarkan kategori dan kecuali tempat input
+    filtered_df = similarity_df[
+        (similarity_df['Category'] == selected_category) &
+        (similarity_df['index'] != idx)
+    ]
+
+    # Urutkan berdasarkan skor kemiripan dan ambil n rekomendasi teratas
+    top_indices = filtered_df.sort_values('similarity', ascending=False).head(n)['index']
+    recommendations = data.iloc[top_indices][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
 
     return recommendations
-
 
 
 
