@@ -224,32 +224,6 @@ def collaborative_filtering_svd(data, user_id, n=5):
     recommendations = tourism_with_id[tourism_with_id['Place_Id'].isin(recommended_place_ids)]
     return recommendations[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']].head(n)
 
-# Hybrid Recommendation System
-def hybrid_recommendation(user_id, name, tourism_rating, tourism_with_id, cosine_sim, n=10, alpha=0.5):
-    # Step 1: Get Collaborative Recommendations
-    collaborative_ids = collaborative_filtering_svd(tourism_rating, user_id, n)
-
-    # Step 2: Get Content-Based Recommendations
-    content_ids = content_based_recommendation(name, tourism_with_id, cosine_sim, n)
-
-    # Step 3: Merge and Weight Scores
-    collaborative_score = pd.DataFrame({
-        'Place_Id': collaborative_ids,
-        'score': [1 - alpha] * len(collaborative_ids)  # Assign weight (1-alpha)
-    })
-
-    content_score = pd.DataFrame({
-        'Place_Id': content_ids,
-        'score': [alpha] * len(content_ids)  # Assign weight alpha
-    })
-
-    combined_scores = pd.concat([collaborative_score, content_score])
-    combined_scores = combined_scores.groupby('Place_Id', as_index=False).sum()
-    combined_scores = combined_scores.sort_values(by='score', ascending=False).head(n)
-
-    # Step 4: Fetch Recommended Places
-    recommendations = tourism_with_id[tourism_with_id['Place_Id'].isin(combined_scores['Place_Id'])]
-    return recommendations[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']].head(n)
 
 
 import tensorflow as tf
@@ -417,6 +391,32 @@ def display_statistics():
     avg_rating_by_age = tourism_rating.merge(user_data, on='User_Id').groupby('Age_Group')['Place_Ratings'].mean()
     st.bar_chart(avg_rating_by_age)
 
+def add_footer():
+    st.markdown(
+        """
+        <style>
+        footer {
+            visibility: hidden;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #f0f0f0;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 14px;
+            color: #555;
+            border-top: 1px solid #ddd;
+        }
+        </style>
+        <div class="footer">
+            © 2024 Lamongan Travel Recommendation System. All rights reserved. Bisri Copyright.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
 # Streamlit UI
 st.sidebar.title("Navigation")
@@ -427,7 +427,7 @@ if page == "Recommendation System":
     st.sidebar.header("Recommendation Options")
     selected_model = st.sidebar.selectbox(
         "Select Recommendation Model:",
-        ["Simple Recommendation", "Content-Based Filtering", "Collaborative Filtering", "Collaborative Filtering SVD", "Hybrid Recommendation"]
+        ["Simple Recommendation", "Content-Based Filtering", "Collaborative Filtering", "Collaborative Filtering SVD"]
     )
 
     if selected_model == "Simple Recommendation":
@@ -530,26 +530,7 @@ if page == "Recommendation System":
                 st.write("Here are the recommendations based on your preferences:")
                 st.dataframe(recommendations)
 
-    if selected_model == "Hybrid Recommendation":
-        st.title("Hybrid Recommendation System")
-        # Show user table
-        display_user_table()
-        # User input for User ID
-        user_id = st.selectbox("Select User ID:", user_data['User_Id'].unique())
-        place_name = st.text_input("Select a Place Name (Optional):")
-        num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
-        alpha = st.slider("Alpha (Weight for Content-Based Recommendations):", min_value=0.0, max_value=1.0, value=0.5)
 
-        if st.button("Recommend Based on Hybrid System"):
-            if place_name:
-                recommendations = hybrid_recommendation(user_id, place_name, tourism_rating, merged_data, cosine_sim,
-                                                        n=num_recommendations)
-                st.subheader("Recommendations (Hybrid Approach):")
-                st.dataframe(recommendations)
-            else:
-                collaborative_only = collaborative_filtering_svd(tourism_rating, user_id, n=num_recommendations)
-                st.subheader("Recommendations (Collaborative Only):")
-                st.dataframe(collaborative_only)
 
 
 elif page == "Statistics":
@@ -562,3 +543,5 @@ elif page == "Top 10 Best Places":
     top_places = compute_top_places(tourism_with_id)
     st.write("Top 10 Best Places (Weighted):")
     st.dataframe(top_places)
+
+add_footer()
