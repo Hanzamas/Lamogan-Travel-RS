@@ -427,7 +427,7 @@ if page == "Recommendation System":
     st.sidebar.header("Recommendation Options")
     selected_model = st.sidebar.selectbox(
         "Select Recommendation Model:",
-        ["Simple Recommendation", "Content-Based Filtering", "Collaborative Filtering", "Collaborative Filtering SVD"]
+        ["Simple Recommendation", "Content-Based Filtering", "Collaborative Filtering RecommenderNet", "Collaborative Filtering SVD"]
     )
 
     if selected_model == "Simple Recommendation":
@@ -462,7 +462,7 @@ if page == "Recommendation System":
 
 
 
-    elif selected_model == "Collaborative Filtering":
+    elif selected_model == "Collaborative Filtering RecommenderNet":
 
         st.subheader("Collaborative Recommendations")
         # Show user table
