@@ -48,17 +48,19 @@ def content_based_recommendation(data, title, n=5):
     idx = int(idx)
 
     sim_scores = cosine_sim[idx].flatten()
-    sim_scores = [(i, score) for i, score in enumerate(sim_scores) if i != idx]
+    sim_scores = [(i, score) for i, score in enumerate(sim_scores)]
     sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[:n]
 
     place_indices = [i[0] for i in sim_scores]
-    recommendations = data.iloc[place_indices][['Place_Name', 'Category', 'Rating', 'Description']]
+    recommendations = data.iloc[place_indices][['Place_Name', 'Category', 'City', 'Rating', 'Description']]
 
-    # Remove input place from recommendations explicitly
+    # Place the input place at the bottom of the recommendations if it exists
     recommendations = recommendations[recommendations['Place_Name'] != title]
-    return recommendations
+    if len(recommendations) < n:
+        recommendations = pd.concat([recommendations, data[data['Place_Name'] == title]])
+    return recommendations.head(n)
 
-# Collaborative Filtering
+
 def collaborative_filtering(data, user_id, n=5):
     reader = Reader(rating_scale=(0.5, 5))
     rating_data = data[['User_Id', 'Place_Id', 'Place_Ratings']]
@@ -74,13 +76,14 @@ def collaborative_filtering(data, user_id, n=5):
 
     visited_places = data[data['User_Id'] == user_id]['Place_Id'].tolist()
     all_places = data['Place_Id'].unique()
-    unvisited_places = [place for place in all_places if place not in visited_places]
 
-    predictions = [(place, svd.predict(user_id, place).est) for place in unvisited_places]
+    # Include both visited and unvisited places for recommendations
+    predictions = [(place, svd.predict(user_id, place).est) for place in all_places]
     predictions = sorted(predictions, key=lambda x: x[1], reverse=True)[:n]
 
     recommended_places = [place[0] for place in predictions]
     return tourism_with_id[tourism_with_id['Place_Id'].isin(recommended_places)][['Place_Name', 'Category', 'City', 'Rating', 'Description']]
+
 
 # Simple Recommendation
 def simple_recommender(data, category=None, min_price=None, max_price=None, min_rating=None, min_reviews=None, n=5):
@@ -138,13 +141,16 @@ if selected_model == "Simple Recommendation":
 
 elif selected_model == "Content-Based Filtering":
     st.subheader("Content-Based Recommendations")
-    selected_place = st.selectbox("Select a Place:", merged_data['Place_Name'].unique())
+    selected_place = st.selectbox("Select a Place (Required):", merged_data['Place_Name'].unique())
     num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
 
     if st.button("Recommend Based on Content"):
         recommendations = content_based_recommendation(merged_data, selected_place, num_recommendations)
-        st.write("Here are the top recommended places:")
-        st.dataframe(recommendations)
+        if recommendations.empty:
+            st.warning("No recommendations found. Please select another place or adjust the number of recommendations.")
+        else:
+            st.write("Here are the top recommended places:")
+            st.dataframe(recommendations)
 
 elif selected_model == "Collaborative Filtering":
     st.subheader("Collaborative Recommendations")
@@ -153,5 +159,8 @@ elif selected_model == "Collaborative Filtering":
 
     if st.button("Recommend Based on User Ratings"):
         recommendations = collaborative_filtering(tourism_rating, user_id, num_recommendations)
-        st.write("Here are the top recommendations based on your preferences:")
-        st.dataframe(recommendations)
+        if recommendations.empty:
+            st.warning("No recommendations found. Please enter a valid User ID or try with a different number of recommendations.")
+        else:
+            st.write("Here are the top recommendations based on your preferences:")
+            st.dataframe(recommendations)
