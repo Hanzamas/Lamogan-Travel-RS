@@ -2,7 +2,7 @@
 Travel Recommendation System
 Sistem Rekomendasi Tempat Wisata berbasis Machine Learning dan Natural Language Processing (NLP) untuk memberikan rekomendasi personal kepada pengguna berdasarkan preferensi mereka.
 <br>
-📌 Deskripsi
+# 📌 Deskripsi
 Lamogan-Travel-RS adalah sistem rekomendasi tempat wisata yang dirancang untuk membantu pengguna menemukan destinasi wisata terbaik. Aplikasi ini menggunakan kombinasi beberapa metode rekomendasi, termasuk Simple,  Content-Based Filtering, Collaborative Filtering, Collaborative Filtering with SVD. Selain itu, sistem ini menyediakan fitur visualisasi statistik dan daftar top 10 tempat terbaik.
 <br>
 📋 Fitur Utama
