@@ -177,4 +177,3 @@ Proyek ini dilisensikan di bawah [MIT License](LICENSE).
 
 --- 
 
-Anda dapat langsung meng-copy-paste teks ini ke dalam file `README.md` untuk GitHub Anda.
