@@ -491,11 +491,20 @@ def add_footer():
 # Streamlit UI
 # st.sidebar.title("Navigasi Sistem Rekomendasi Tempat Wisata")
 # page = st.sidebar.radio("Go to:", ["Sistem Rekomendasi", "Statistik", "Top 10 tempat terbaik"])
-st.markdown("""
-# 🌍 Sistem Rekomendasi Tempat Wisata Lamongan
----
-""")
 st.set_page_config(layout="wide", page_title="Sistem Rekomendasi Tempat Wisata Lamongan", page_icon="🌍")
+st.markdown("""
+# 🌍 Sistem Rekomendasi Tempat Wisata
+---
+Sistem ini dirancang untuk membantu pengguna menemukan tempat wisata terbaik berdasarkan kebutuhan dan preferensi mereka. Dengan berbagai metode rekomendasi seperti **Content-Based Filtering**, **Collaborative Filtering**, dan **Hybrid Recommendations**, aplikasi ini memberikan pengalaman yang personal dan relevan.
+
+Berikut adalah fitur utama dalam sistem ini:
+- **Sistem Rekomendasi**: Menyediakan berbagai metode rekomendasi.
+- **Statistik**: Menampilkan data dan wawasan dari basis data tempat wisata.
+- **Top 10 Tempat Terbaik**: Memberikan daftar tempat wisata dengan ulasan terbaik berdasarkan analisis data.
+
+Kelompok Data Science Melon - Kelas A
+""")
+
 tab1, tab2, tab3 = st.tabs(["Sistem Rekomendasi", "Statistik", "Top 10 Tempat Terbaik"])
 # if page == "Sistem Rekomendasi":
 with tab1:
