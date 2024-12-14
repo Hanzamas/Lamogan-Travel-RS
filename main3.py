@@ -491,10 +491,14 @@ def add_footer():
 # Streamlit UI
 # st.sidebar.title("Navigasi Sistem Rekomendasi Tempat Wisata")
 # page = st.sidebar.radio("Go to:", ["Sistem Rekomendasi", "Statistik", "Top 10 tempat terbaik"])
-tab1, tab2, tab3, tab4 = st.tabs(["Recommendation System", "Statistics", "Top 10 Best Places", "Method Explanations"])
+tab1, tab2, tab3, tab4 = st.tabs(["Sistem Rekomendasi", "Statistik", "Top 10 Tempat Terbaik"])
 # if page == "Sistem Rekomendasi":
 with tab1:
     st.title("Sistem Rekomendasi Tempat Wisata")
+    with st.expander("Apa itu Sistem Rekomendasi Tempat Wisata?"):
+        st.write("""
+        Sistem rekomendasi tempat wisata adalah sebuah teknologi yang dirancang untuk membantu pengguna menemukan destinasi wisata berdasarkan preferensi, minat, dan kebutuhan mereka. Sistem ini menggunakan data seperti riwayat interaksi pengguna, ulasan, deskripsi tempat, dan informasi lain untuk memberikan rekomendasi yang relevan dan personal. Sistem rekomendasi tempat wisata yang Anda gunakan menggabungkan beberapa pendekatan modern untuk memberikan rekomendasi terbaik.
+        """)
     st.header("Opsi Metode Rekomendasi")
     selected_model = st.selectbox(
         "Pilih Metode Rekomendasi:",
