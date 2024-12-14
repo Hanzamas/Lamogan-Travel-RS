@@ -41,7 +41,7 @@ merged_data = preprocess_data()
 
 # Preprocess Data
 def preprocess_data2():
-    tourism_with_id['Jumlah Ulasan'] = tourism_with_id['Jumlah Ulasan'].str.replace(',', '').astype(int)
+    # tourism_with_id['Jumlah Ulasan'] = tourism_with_id['Jumlah Ulasan'].str.replace(',', '').astype(int)
     # merged_data = pd.merge(tourism_rating, tourism_with_id, on="Place_Id")
     tourism_with_id['combined'] = tourism_with_id['Place_Name'] + ' ' + tourism_with_id['Category'] + ' ' + tourism_with_id['Description']
     return tourism_with_id
