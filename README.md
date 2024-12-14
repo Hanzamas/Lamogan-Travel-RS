@@ -26,16 +26,16 @@ Menampilkan wawasan mendalam tentang data tempat wisata, seperti:
 - Menghitung daftar tempat wisata terbaik berdasarkan Weighted Rating:
 - Menggunakan rata-rata ulasan dan popularitas (jumlah ulasan).
 - Mengkombinasikan skor dengan pendekatan persentil.
-
 <br>
-# 💡 **Penjelasan Metode**
+
+# 💡 **Penjelasan Metode**<br>
 1. Simple Recommendation
 Metode paling dasar untuk rekomendasi dengan filter eksplisit:
 - Input: Kategori, harga minimum/maksimum, rating minimum, jumlah ulasan.
 - Output: Daftar tempat berdasarkan rating tertinggi yang sesuai filter.
 - Kelebihan: Mudah digunakan, tidak memerlukan data historis pengguna.
 - Kekurangan: Tidak personal, hasil filter sama untuk semua pengguna.
-
+<br>
 2. Content-Based Filtering
 Rekomendasi berdasarkan kesamaan fitur konten (nama, kategori, deskripsi):
 Algoritma:
@@ -44,14 +44,14 @@ Algoritma:
 - Menghitung kesamaan menggunakan Cosine Similarity.
 - Kelebihan: Tidak memerlukan data pengguna, fokus pada kesamaan konten.
 - Kekurangan: Keterbatasan pada fitur yang disediakan.
-
+<br>
 3. Content-Based Filtering+ (TF-IDF)
 Peningkatan metode content-based dengan pembobotan TF-IDF:
 - TF-IDF memberikan bobot lebih tinggi untuk term unik dan menurunkan bobot untuk term umum.
 - Membantu menangkap keunikan deskripsi tempat wisata, memberikan hasil yang lebih relevan.
 - Kelebihan: Akurat untuk dataset dengan variasi deskripsi yang tinggi.
 - Kekurangan: Tetap terbatas pada konten yang tersedia.
-
+<br>
 4. Collaborative Filtering (RecommenderNet)
 Rekomendasi berdasarkan perilaku pengguna lain menggunakan TensorFlow:
 Algoritma:
@@ -60,7 +60,7 @@ Algoritma:
 - Menangkap pola laten dari preferensi pengguna.
 - Kelebihan: Hasil personal yang mendalam.
 - Kekurangan: Membutuhkan data historis pengguna (masalah cold-start).
-
+<br>
 5. Collaborative Filtering with SVD
 Metode dekomposisi matriks untuk menangani sparsity data:
 Algoritma:
@@ -68,14 +68,15 @@ Algoritma:
 - Menggunakan kombinasi faktor untuk memprediksi rating.
 - Kelebihan: Efektif untuk dataset yang sparsity tinggi.
 - Kekurangan: Membutuhkan data cukup banyak untuk akurasi tinggi.
-# 📊 Statistik dan Visualisasi
+<br>
+**📊 Statistik dan Visualisasi**<br>
 - Distribusi Kategori: Menampilkan jumlah tempat wisata per kategori.
 - Distribusi Rating: Menunjukkan penyebaran rating tempat wisata dalam histogram.
 - Kota Terbanyak: Kota dengan jumlah tempat wisata terbanyak.
 - Hubungan Harga dan Rating: Scatterplot antara harga dan rating tempat wisata.
 - Statistik Pengguna: Distribusi usia, gender, dan lokasi pengguna.
 <br>
-# 💻 Instalasi
+**💻 Instalasi**<br>
 - Clone repository ini:
 git clone https://github.com/username/lamogan-travel-rs.git
 cd lamogan-travel-rs
@@ -85,7 +86,8 @@ pip install -r requirements.txt
 - Jalankan aplikasi Streamlit:
 <br>
 streamlit run main3.py
-# Techstack
+<br>
+**Techstack**<br>
 - Python
 - Streamlit (UI)
 - TensorFlow (Collaborative Filtering)
