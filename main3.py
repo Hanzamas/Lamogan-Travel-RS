@@ -589,7 +589,7 @@ if page == "Recommendation System":
         if st.button("Recommend"):
             recommendations = content_based_recommendation_tfidf(
                 name=selected_place,
-                cosine_sim_tfidf=cosine_sim_tfidf,
+                cosine_sim_tfidf=cosine_sim_tfidf,  # Correct parameter name
                 items=merged_data2,
                 n=num_recommendations
             )
