@@ -490,9 +490,10 @@ def add_footer():
 
 # Streamlit UI
 st.sidebar.title("Navigasi Sistem Rekomendasi Tempat Wisata")
-page = st.sidebar.radio("Go to:", ["Sistem Rekomendasi", "Statistik", "Top 10 tempat terbaik"])
-
-if page == "Sistem Rekomendasi":
+# page = st.sidebar.radio("Go to:", ["Sistem Rekomendasi", "Statistik", "Top 10 tempat terbaik"])
+tab1, tab2, tab3, tab4 = st.tabs(["Recommendation System", "Statistics", "Top 10 Best Places", "Method Explanations"])
+# if page == "Sistem Rekomendasi":
+with tab1:
     st.title("Sistem Rekomendasi Tempat Wisata")
     st.sidebar.header("Opsi Metode Rekomendasi")
     selected_model = st.sidebar.selectbox(
@@ -641,10 +642,12 @@ if page == "Sistem Rekomendasi":
 
 
 
-elif page == "Statistik":
+# elif page == "Statistik":
+with tab2:
     display_statistics()
 
-elif page == "Top 10 tempat terbaik":
+# elif page == "Top 10 tempat terbaik":
+with tab3:
     st.subheader("Top 10 tempat terbaik untuk dikunjungi di lamongan")
     with st.expander("Penjelasan Top 10 Tempat Terbaik"):
         st.write("""
