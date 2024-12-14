@@ -491,7 +491,7 @@ def add_footer():
 # Streamlit UI
 # st.sidebar.title("Navigasi Sistem Rekomendasi Tempat Wisata")
 # page = st.sidebar.radio("Go to:", ["Sistem Rekomendasi", "Statistik", "Top 10 tempat terbaik"])
-tab1, tab2, tab3, tab4 = st.tabs(["Sistem Rekomendasi", "Statistik", "Top 10 Tempat Terbaik"])
+tab1, tab2, tab3 = st.tabs(["Sistem Rekomendasi", "Statistik", "Top 10 Tempat Terbaik"])
 # if page == "Sistem Rekomendasi":
 with tab1:
     st.title("Sistem Rekomendasi Tempat Wisata")
