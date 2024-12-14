@@ -582,7 +582,7 @@ if page == "Recommendation System":
 
         st.subheader("Content-Based Recommendations+")
 
-        selected_place = st.text_input("Enter a place name:")
+        selected_place = st.text_input("Enter a Travel Content:")
 
         num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
 
