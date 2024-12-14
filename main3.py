@@ -493,7 +493,7 @@ def add_footer():
 # page = st.sidebar.radio("Go to:", ["Sistem Rekomendasi", "Statistik", "Top 10 tempat terbaik"])
 st.set_page_config(layout="wide", page_title="Sistem Rekomendasi Tempat Wisata Lamongan", page_icon="🌍")
 st.markdown("""
-# 🌍 Sistem Rekomendasi Tempat Wisata
+# 🌍 Sistem Rekomendasi Tempat Wisata Lamongan
 ---
 Sistem ini dirancang untuk membantu pengguna menemukan tempat wisata terbaik berdasarkan kebutuhan dan preferensi mereka. Dengan berbagai metode rekomendasi seperti **Content-Based Filtering**, **Collaborative Filtering**, dan **Hybrid Recommendations**, aplikasi ini memberikan pengalaman yang personal dan relevan.
 
