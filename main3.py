@@ -489,14 +489,14 @@ def add_footer():
     )
 
 # Streamlit UI
-st.sidebar.title("Navigasi Sistem Rekomendasi Tempat Wisata")
+# st.sidebar.title("Navigasi Sistem Rekomendasi Tempat Wisata")
 # page = st.sidebar.radio("Go to:", ["Sistem Rekomendasi", "Statistik", "Top 10 tempat terbaik"])
 tab1, tab2, tab3, tab4 = st.tabs(["Recommendation System", "Statistics", "Top 10 Best Places", "Method Explanations"])
 # if page == "Sistem Rekomendasi":
 with tab1:
     st.title("Sistem Rekomendasi Tempat Wisata")
-    st.sidebar.header("Opsi Metode Rekomendasi")
-    selected_model = st.sidebar.selectbox(
+    st.header("Opsi Metode Rekomendasi")
+    selected_model = st.selectbox(
         "Pilih Metode Rekomendasi:",
         ["Simple Recommendation", "Content-Based Filtering" , "Content-Based Filtering+", "Collaborative Filtering RecommenderNet", "Collaborative Filtering SVD"]
     )
