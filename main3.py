@@ -39,6 +39,36 @@ def preprocess_data():
 
 merged_data = preprocess_data()
 
+# Preprocess Data
+def preprocess_data2():
+    tourism_with_id['Jumlah Ulasan'] = tourism_with_id['Jumlah Ulasan'].str.replace(',', '').astype(int)
+    # merged_data = pd.merge(tourism_rating, tourism_with_id, on="Place_Id")
+    tourism_with_id['combined'] = tourism_with_id['Place_Name'] + ' ' + tourism_with_id['Category'] + ' ' + tourism_with_id['Description']
+    return tourism_with_id
+    # # Create 'content' column using relevant fields
+    # merged_data['content'] = merged_data[
+    #     ['Place_Name', 'Category']
+    # ].fillna('').apply(lambda x: ' '.join(map(str, x)), axis=1)
+    # Combine 'Place_Name' and 'Category' into a new 'combined' column
+    # return merged_data
+
+merged_data2 = preprocess_data2()
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+
+
+@st.cache_data
+def compute_similarity_tfidf(data):
+    # Initialize the TF-IDF vectorizer with stop words
+    tfidf = TfidfVectorizer(stop_words=indonesian_stop_words)
+
+    # Fit and transform the 'combined' column
+    tfidf_matrix = tfidf.fit_transform(data['combined'])
+
+    # Compute cosine similarity from the TF-IDF matrix
+    cosine_sim = cosine_similarity(tfidf_matrix)
+
+    return cosine_sim
 
 
 # Compute TF-IDF and Cosine Similarity
@@ -52,7 +82,35 @@ def compute_similarity(data):
     return cosine_sim
 # cosine_sim, indices = compute_similarity(merged_data)
 cosine_sim = compute_similarity(merged_data)
+cosine_sim_tfidf = compute_similarity_tfidf(merged_data2)
 
+def content_based_recommendation_tfidf(name, cosine_sim_tfidf, items, n=5):
+    # Ensure case-insensitive matching
+    matching_items = items[items['combined'].str.contains(name, case=False, na=False)]
+
+    if matching_items.empty:
+        st.warning(f"No places found matching '{name}'. Showing fallback recommendations.")
+        # Fallback: Top-rated places
+        fallback = items.sort_values(by='Rating', ascending=False)
+        return fallback[['Place_Name', 'Category', 'Price', 'Description', 'City']].head(n)
+
+    # Get the index of the first matching item
+    idx = matching_items.index[0]
+
+    # Compute similarity scores based on TF-IDF
+    sim_scores = list(enumerate(cosine_sim_tfidf[idx]))
+    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
+
+    # Get the indices of the top n most similar items
+    top_indices = [i[0] for i in sim_scores[1:n + 1]]  # Exclude the input itself
+    recommendations = items.iloc[top_indices][['Place_Name', 'Category', 'Price', 'Description', 'City']]
+
+    if recommendations.empty:
+        st.warning(f"No similar places found for '{name}'. Showing fallback recommendations.")
+        fallback = items.sort_values(by='Rating', ascending=False)
+        return fallback[['Place_Name', 'Category', 'Price', 'Description', 'City']].head(n)
+
+    return recommendations
 
 # Content-Based Recommendation
 def content_based_recommendation(name, cosine_sim, items, n=5):
@@ -114,7 +172,6 @@ def content_based_recommendation(name, cosine_sim, items, n=5):
 #
 #     return recommendations
 
-# Updated Collaborative Filtering Function
 def collaborative_filtering_with_model(data, user_id, model, n=5):
     try:
         # Ensure user_id exists in the dataset
@@ -128,13 +185,18 @@ def collaborative_filtering_with_model(data, user_id, model, n=5):
             st.error(f"User ID {user_id} not found in the dataset!")
             return pd.DataFrame()
 
+        # Map user and places to encoded values
         user_encoder = user_to_user_encoded[user_id]
-        places_visited_by_user = data[data['User_Id'] == user_id]['Place_Id'].tolist()
-        unvisited_places = list(set(place_ids) - set(places_visited_by_user))
+
+        # Extract places visited by the user with ratings > 0
+        places_visited_by_user = data[(data['User_Id'] == user_id) & (data['Place_Ratings'] > 0)]['Place_Id'].tolist()
+
+        # Extract unvisited places (those with a rating of 0)
+        unvisited_places = data[(data['User_Id'] == user_id) & (data['Place_Ratings'] == 0)]['Place_Id'].tolist()
 
         if not unvisited_places:
-            # User has visited all places
-            st.warning(f"User {user_id} has visited all available places.")
+            # User has no unrated places
+            st.warning(f"User {user_id} has visited and rated all available places.")
             st.info("Recommending the top places from visited ones based on preferences.")
 
             # Prepare data for places already visited
@@ -144,7 +206,8 @@ def collaborative_filtering_with_model(data, user_id, model, n=5):
             # Predict ratings for visited places
             ratings = model.predict(user_place_array).flatten()
 
-            random_noise = np.random.uniform(-0.05, 0.05, len(ratings))
+            # Add a small random noise to diversify results
+            random_noise = np.random.uniform(-0.01, 0.01, len(ratings))
             adjusted_ratings = ratings + random_noise
 
             # Get top N recommendations from adjusted ratings
@@ -177,6 +240,7 @@ def collaborative_filtering_with_model(data, user_id, model, n=5):
     except Exception as e:
         st.error(f"Error in collaborative filtering: {e}")
         return pd.DataFrame()
+
 
 
 # Collaborative Filtering with SVD
@@ -427,7 +491,7 @@ if page == "Recommendation System":
     st.sidebar.header("Recommendation Options")
     selected_model = st.sidebar.selectbox(
         "Select Recommendation Model:",
-        ["Simple Recommendation", "Content-Based Filtering", "Collaborative Filtering RecommenderNet", "Collaborative Filtering SVD"]
+        ["Simple Recommendation", "Content-Based Filtering" , "Content-Based Filtering+", "Collaborative Filtering RecommenderNet", "Collaborative Filtering SVD"]
     )
 
     if selected_model == "Simple Recommendation":
@@ -508,6 +572,26 @@ if page == "Recommendation System":
 
                 n=num_recommendations
 
+            )
+
+            st.write("Recommended Places:")
+
+            st.dataframe(recommendations)
+
+    if selected_model == "Content-Based Filtering+":
+
+        st.subheader("Content-Based Recommendations+")
+
+        selected_place = st.text_input("Enter a place name:")
+
+        num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
+
+        if st.button("Recommend"):
+            recommendations = content_based_recommendation_tfidf(
+                name=selected_place,
+                cosine_sim=cosine_sim_tfidf,
+                items=merged_data,
+                n=num_recommendations
             )
 
             st.write("Recommended Places:")
