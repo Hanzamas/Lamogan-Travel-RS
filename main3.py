@@ -643,7 +643,7 @@ elif page == "Top 10 tempat terbaik":
 
     # Compute the top 10 places based on ratings and the number of reviews
     top_places = compute_top_places(tourism_with_id)
-    st.write("Top 10 tempat terbaik (Weighted):")
+    st.write("Top 10 tempat terbaik (Dibobotkan):")
     st.dataframe(top_places)
 
 add_footer()
