@@ -391,8 +391,14 @@ def display_user_table():
     st.dataframe(user_table)
 
 def display_statistics():
-    st.title("Statistik Data Tempat Wisata dan Pengguna")
-
+    st.header("Statistik Data Tempat Wisata dan Pengguna")
+    with st.expander("Penjelasan Statistik"):
+        st.write("""
+        Pada halaman ini, Anda dapat menemukan berbagai informasi statistik dan wawasan terkait data wisata.
+        Statistik dasar seperti distribusi kategori tempat, distribusi rating, jumlah tempat berdasarkan kota, 
+        serta hubungan antara harga dan rating disajikan dalam bentuk grafik dan tabel.
+        Halaman ini bertujuan untuk membantu pengguna memahami pola data secara keseluruhan sebelum menggunakan sistem rekomendasi.
+        """)
     # Basic statistics for tourism_with_id
     st.subheader("Statistik Dasar Data Tempat Wisata")
     st.write(tourism_with_id.describe())
@@ -639,8 +645,18 @@ elif page == "Statistik":
     display_statistics()
 
 elif page == "Top 10 tempat terbaik":
-    st.title("Top 10 tempat terbaik untuk dikunjungi di lamongan")
+    st.subheader("Top 10 tempat terbaik untuk dikunjungi di lamongan")
+    with st.expander("Penjelasan Top 10 Tempat Terbaik"):
+        st.write("""
+        Halaman ini menampilkan 10 tempat terbaik untuk dikunjungi berdasarkan kombinasi rating rata-rata dan jumlah ulasan.
+        Tempat dengan banyak ulasan biasanya lebih dapat dipercaya, sementara rating memberikan indikasi kualitas. 
+        Sistem menggunakan metode weighted scoring untuk menyeimbangkan kedua faktor ini:
 
+        - **Weighted Score**: Menggabungkan rating rata-rata dengan jumlah ulasan untuk menghitung skor tempat.
+        - Tempat dengan skor tertinggi akan ditampilkan dalam tabel.
+
+        Halaman ini dirancang untuk memberikan rekomendasi umum bagi pengguna yang ingin menjelajahi tempat-tempat paling populer.
+        """)
     # Compute the top 10 places based on ratings and the number of reviews
     top_places = compute_top_places(tourism_with_id)
     st.write("Top 10 tempat terbaik (Dibobotkan):")
