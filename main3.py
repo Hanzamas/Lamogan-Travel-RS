@@ -391,67 +391,67 @@ def display_user_table():
     st.dataframe(user_table)
 
 def display_statistics():
-    st.title("Statistics and Insights")
+    st.title("Statistik Data Tempat Wisata dan Pengguna")
 
     # Basic statistics for tourism_with_id
-    st.subheader("Basic Statistics for Tourism Data")
+    st.subheader("Statistik Dasar Data Tempat Wisata")
     st.write(tourism_with_id.describe())
 
     # Distribution of Categories
-    st.subheader("Category Distribution")
+    st.subheader("Kategori Distribusi")
     category_counts = tourism_with_id['Category'].value_counts()
     st.bar_chart(category_counts)
 
     # Distribution of Ratings
-    st.subheader("Rating Distribution")
+    st.subheader("Distribusi Rating")
     fig, ax = plt.subplots()
     tourism_with_id['Rating'].hist(bins=10, ax=ax, grid=False)
-    ax.set_title("Distribution of Ratings")
+    ax.set_title("Distribusi Rating")
     ax.set_xlabel("Rating")
     ax.set_ylabel("Frequency")
     st.pyplot(fig)
 
     # City-wise Distribution
-    st.subheader("City-wise Place Distribution")
+    st.subheader("Distribusi Kota Wisata")
     city_counts = tourism_with_id['City'].value_counts()
     st.bar_chart(city_counts)
 
     # Price vs Rating Scatterplot
-    st.subheader("Price vs Rating")
+    st.subheader("Harga vs Rating")
     fig, ax = plt.subplots()
     tourism_with_id.plot.scatter(x='Price', y='Rating', alpha=0.5, ax=ax)
-    ax.set_title("Price vs Rating")
-    ax.set_xlabel("Price")
+    ax.set_title("Harga vs Rating")
+    ax.set_xlabel("Harga")
     ax.set_ylabel("Rating")
     st.pyplot(fig)
 
     # User Data Statistics
-    st.subheader("User Data Insights")
+    st.subheader("Statistik Pengguna")
 
     # Gender Distribution
-    st.subheader("Gender Distribution")
+    st.subheader("Distribusi Gender")
     gender_counts = user_data['Gender'].value_counts()
     st.bar_chart(gender_counts)
 
     # Location Distribution
-    st.subheader("Location Distribution")
+    st.subheader("Distribusi Lokasi Pengguna")
     location_counts = user_data['Location'].value_counts()
     st.bar_chart(location_counts)
 
     # Age Distribution
-    st.subheader("Age Distribution")
+    st.subheader("Distribusi Umur Pengguna")
     user_data['Age_Group'] = pd.cut(user_data['Age'], bins=[0, 20, 30, 40, 100],
                                     labels=["<20", "20-30", "30-40", ">40"])
     age_group_counts = user_data['Age_Group'].value_counts()
     st.bar_chart(age_group_counts)
 
     # Average Ratings by Gender
-    st.subheader("Average Ratings by Gender")
+    st.subheader("Rata-rata Rating berdasarkan Gender")
     avg_rating_by_gender = tourism_rating.merge(user_data, on='User_Id').groupby('Gender')['Place_Ratings'].mean()
     st.bar_chart(avg_rating_by_gender)
 
     # Average Ratings by Age Group
-    st.subheader("Average Ratings by Age Group")
+    st.subheader("Rata-rata rating berdasarkan Grup Umur")
     avg_rating_by_age = tourism_rating.merge(user_data, on='User_Id').groupby('Age_Group')['Place_Ratings'].mean()
     st.bar_chart(avg_rating_by_age)
 
@@ -483,20 +483,35 @@ def add_footer():
     )
 
 # Streamlit UI
-st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to:", ["Recommendation System", "Statistics", "Top 10 Best Places"])
+st.sidebar.title("Navigasi Sistem Rekomendasi Tempat Wisata")
+page = st.sidebar.radio("Go to:", ["Sistem Rekomendasi", "Statistik", "Top 10 tempat terbaik"])
 
-if page == "Recommendation System":
-    st.title("Travel Recommendation System")
-    st.sidebar.header("Recommendation Options")
+if page == "Sistem Rekomendasi":
+    st.title("Sistem Rekomendasi Tempat Wisata")
+    st.sidebar.header("Opsi Metode Rekomendasi")
     selected_model = st.sidebar.selectbox(
         "Select Recommendation Model:",
         ["Simple Recommendation", "Content-Based Filtering" , "Content-Based Filtering+", "Collaborative Filtering RecommenderNet", "Collaborative Filtering SVD"]
     )
 
     if selected_model == "Simple Recommendation":
-        st.subheader("Simple Recommendations")
-
+        st.subheader("Rekomendasi Sederhana")
+        with st.expander("Apa itu Rekomendasi Sederhana?"):
+            st.write("""
+            Metode rekomendasi sederhana adalah pendekatan paling dasar dalam sistem rekomendasi. Metode ini memungkinkan pengguna untuk memfilter tempat berdasarkan kriteria tertentu seperti:
+            Kategori: Jenis tempat (misalnya, restoran, taman, situs budaya).
+            Rentang Harga: Rentang harga minimum dan maksimum untuk tempat.
+            Rating Minimum: Ambang batas untuk rating rata-rata suatu tempat.
+            Jumlah Ulasan Minimum: Filter untuk hanya menyertakan tempat yang sering diulas.
+            Metode ini mengurutkan tempat yang sesuai dengan filter dalam urutan menurun berdasarkan rating. Sangat berguna bagi pengguna yang memiliki preferensi khusus atau sedang menjelajahi opsi umum tanpa data yang dipersonalisasi.
+            Kelebihan:
+            Sederhana dan mudah dipahami.
+            Tidak memerlukan data pengguna sebelumnya, sehingga cocok untuk pengguna baru.
+            Memberikan hasil instan berdasarkan input eksplisit pengguna.
+            Kekurangan:
+            Tidak dipersonalisasi; filter yang sama menghasilkan hasil yang sama untuk semua pengguna.
+            Tidak mempertimbangkan preferensi atau perilaku historis pengguna.
+            """)
         # Tambahkan filter kategori dan parameter lainnya
         category_options = tourism_with_id['Category'].unique()
         selected_category = st.selectbox("Select a Category (Optional):", [None] + list(category_options))
@@ -529,6 +544,11 @@ if page == "Recommendation System":
     elif selected_model == "Collaborative Filtering RecommenderNet":
 
         st.subheader("Collaborative Recommendations RecommenderNet Tensorflow Keras Model")
+        with st.expander("What is Collaborative Filtering (RecommenderNet)?"):
+            st.write("""
+            Collaborative Filtering with RecommenderNet uses deep learning to predict user preferences 
+            based on their historical interactions. It provides highly personalized recommendations.
+            """)
         # Show user table
         display_user_table()
         user_id = st.number_input("Enter User ID:", min_value=1, step=1)
@@ -556,7 +576,11 @@ if page == "Recommendation System":
     if selected_model == "Content-Based Filtering":
 
         st.subheader("Content-Based Recommendations")
-
+        with st.expander("What is Content-Based Filtering?"):
+            st.write("""
+            Content-Based Filtering recommends places similar to a selected place by analyzing their features 
+            (e.g., name, category, description) using CountVectorizer and cosine similarity.
+            """)
         selected_place = st.text_input("Enter a place name:")
 
         num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
@@ -581,6 +605,11 @@ if page == "Recommendation System":
     if selected_model == "Content-Based Filtering+":
 
         st.subheader("Content-Based Recommendations+")
+        with st.expander("What is Content-Based Filtering+?"):
+            st.write("""
+            This method enhances basic content-based filtering by using TF-IDF, which assigns weights to words 
+            based on their importance, resulting in more refined recommendations.
+            """)
 
         selected_place = st.text_input("Enter a Travel Content:")
 
@@ -600,6 +629,12 @@ if page == "Recommendation System":
 
     if selected_model == "Collaborative Filtering SVD":
         st.title("Collaborative Filtering with SVD")
+        st.subheader("Collaborative Filtering with SVD")
+        with st.expander("What is Collaborative Filtering with SVD?"):
+            st.write("""
+                This method uses Singular Value Decomposition (SVD) to discover latent patterns in user preferences 
+                and item features, making it effective for sparse datasets.
+                """)
         # Show user table
         display_user_table()
         # User input for User ID
@@ -617,15 +652,15 @@ if page == "Recommendation System":
 
 
 
-elif page == "Statistics":
+elif page == "Statistik":
     display_statistics()
 
-elif page == "Top 10 Best Places":
-    st.title("Top 10 Best Places to Visit")
+elif page == "Top 10 tempat terbaik":
+    st.title("Top 10 tempat terbaik untuk dikunjungi di lamongan")
 
     # Compute the top 10 places based on ratings and the number of reviews
     top_places = compute_top_places(tourism_with_id)
-    st.write("Top 10 Best Places (Weighted):")
+    st.write("Top 10 tempat terbaik (Weighted):")
     st.dataframe(top_places)
 
 add_footer()
