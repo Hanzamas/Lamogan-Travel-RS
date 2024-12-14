@@ -490,7 +490,7 @@ if page == "Sistem Rekomendasi":
     st.title("Sistem Rekomendasi Tempat Wisata")
     st.sidebar.header("Opsi Metode Rekomendasi")
     selected_model = st.sidebar.selectbox(
-        "Select Recommendation Model:",
+        "Pilih Metode Rekomendasi:",
         ["Simple Recommendation", "Content-Based Filtering" , "Content-Based Filtering+", "Collaborative Filtering RecommenderNet", "Collaborative Filtering SVD"]
     )
 
@@ -498,35 +498,23 @@ if page == "Sistem Rekomendasi":
         st.subheader("Rekomendasi Sederhana")
         with st.expander("Apa itu Rekomendasi Sederhana?"):
             st.write("""
-            Metode rekomendasi sederhana adalah pendekatan paling dasar dalam sistem rekomendasi. Metode ini memungkinkan pengguna untuk memfilter tempat berdasarkan kriteria tertentu seperti:
-            Kategori: Jenis tempat (misalnya, restoran, taman, situs budaya).
-            Rentang Harga: Rentang harga minimum dan maksimum untuk tempat.
-            Rating Minimum: Ambang batas untuk rating rata-rata suatu tempat.
-            Jumlah Ulasan Minimum: Filter untuk hanya menyertakan tempat yang sering diulas.
-            Metode ini mengurutkan tempat yang sesuai dengan filter dalam urutan menurun berdasarkan rating. Sangat berguna bagi pengguna yang memiliki preferensi khusus atau sedang menjelajahi opsi umum tanpa data yang dipersonalisasi.
-            Kelebihan:
-            Sederhana dan mudah dipahami.
-            Tidak memerlukan data pengguna sebelumnya, sehingga cocok untuk pengguna baru.
-            Memberikan hasil instan berdasarkan input eksplisit pengguna.
-            Kekurangan:
-            Tidak dipersonalisasi; filter yang sama menghasilkan hasil yang sama untuk semua pengguna.
-            Tidak mempertimbangkan preferensi atau perilaku historis pengguna.
+            Metode Simple Recommendation adalah pendekatan yang paling dasar dalam sistem rekomendasi. Metode ini memungkinkan pengguna untuk memfilter tempat berdasarkan kriteria seperti kategori, rentang harga, rating minimum, dan jumlah ulasan minimum. Tempat yang memenuhi filter diurutkan berdasarkan rating dalam urutan menurun. Metode ini cocok untuk pengguna baru atau yang tidak memiliki data personal.
             """)
         # Tambahkan filter kategori dan parameter lainnya
         category_options = tourism_with_id['Category'].unique()
-        selected_category = st.selectbox("Select a Category (Optional):", [None] + list(category_options))
+        selected_category = st.selectbox("Pilih Kategori (Optional):", [None] + list(category_options))
 
-        min_price = st.number_input("Minimum Price (Optional):", min_value=0, step=1, value=0)
-        max_price = st.number_input("Maximum Price (Optional):", min_value=0, step=1, value=0)
+        min_price = st.number_input("Harga Minimal (Optional):", min_value=0, step=1, value=0)
+        max_price = st.number_input("Harga Maksimal (Optional):", min_value=0, step=1, value=0)
         if max_price == 0:
             max_price = None  # Tidak ada batas atas harga jika tidak diatur
 
-        min_rating = st.slider("Minimum Rating (Optional):", min_value=0.0, max_value=5.0, step=0.1, value=0.0)
-        min_reviews = st.number_input("Minimum Number of Reviews (Optional):", min_value=0, step=1, value=0)
+        min_rating = st.slider("Rating Minimal (Optional):", min_value=0.0, max_value=5.0, step=0.1, value=0.0)
+        min_reviews = st.number_input("Minimal Jumlah Review (Optional):", min_value=0, step=1, value=0)
 
-        num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
+        num_recommendations = st.slider("Jumlah Rekomendasi:", min_value=1, max_value=10, value=5)
 
-        if st.button("Get Recommendations"):
+        if st.button("Rekomendasi"):
             recommendations = simple_recommender(
                 tourism_with_id,
                 category=selected_category,
@@ -536,26 +524,25 @@ if page == "Sistem Rekomendasi":
                 min_reviews=min_reviews if min_reviews > 0 else None,
                 n=num_recommendations
             )
-            st.write("Here are the top recommended places:")
+            st.write("Berikut ini adalah Rekomendasi nya:")
             st.dataframe(recommendations)
 
 
 
     elif selected_model == "Collaborative Filtering RecommenderNet":
 
-        st.subheader("Collaborative Recommendations RecommenderNet Tensorflow Keras Model")
-        with st.expander("What is Collaborative Filtering (RecommenderNet)?"):
+        st.subheader("Collaborative Recommendations RecommenderNet")
+        with st.expander("Apa itu Collaborative Filtering (RecommenderNet)?"):
             st.write("""
-            Collaborative Filtering with RecommenderNet uses deep learning to predict user preferences 
-            based on their historical interactions. It provides highly personalized recommendations.
+            Collaborative Filtering menggunakan preferensi pengguna lain yang mirip untuk merekomendasikan tempat. Model TensorFlow Keras RecommenderNet mempelajari hubungan laten antara pengguna dan tempat dari interaksi sebelumnya. Metode ini memberikan rekomendasi yang sangat personal, tetapi membutuhkan data historis pengguna yang cukup.
             """)
         # Show user table
         display_user_table()
-        user_id = st.number_input("Enter User ID:", min_value=1, step=1)
+        user_id = st.number_input("Masukan User ID:", min_value=1, step=1)
 
-        num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
+        num_recommendations = st.slider("Jumlah Rekomendasi:", min_value=1, max_value=10, value=5)
 
-        if st.button("Recommend Based on User Preferences"):
+        if st.button("Rekomendasi"):
 
             if model:
 
@@ -565,7 +552,7 @@ if page == "Sistem Rekomendasi":
 
                 )
 
-                st.write("Here are the recommendations based on your preferences:")
+                st.write("Berikut ini adalah Rekomendasi berdasarkan Referensi Pengguna:")
 
                 st.dataframe(recommendations)
 
@@ -576,16 +563,15 @@ if page == "Sistem Rekomendasi":
     if selected_model == "Content-Based Filtering":
 
         st.subheader("Content-Based Recommendations")
-        with st.expander("What is Content-Based Filtering?"):
+        with st.expander("Apa itu Content-Based Filtering?"):
             st.write("""
-            Content-Based Filtering recommends places similar to a selected place by analyzing their features 
-            (e.g., name, category, description) using CountVectorizer and cosine similarity.
+            Content-Based Filtering menyarankan tempat yang mirip dengan tempat yang dipilih berdasarkan fitur-fitur seperti nama, kategori. Teknik ini menggunakan CountVectorizer untuk mengubah data teks menjadi vektor numerik dan menghitung kesamaan menggunakan Cosine Similarity. Cocok untuk pengguna baru, tetapi bisa kurang beragam.
             """)
-        selected_place = st.text_input("Enter a place name:")
+        selected_place = st.text_input("Masukan Nama atau Kategori Tempat:")
 
-        num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
+        num_recommendations = st.slider("Jumlah Rekomendasi:", min_value=1, max_value=10, value=5)
 
-        if st.button("Recommend"):
+        if st.button("Rekomendasi"):
             recommendations = content_based_recommendation(
 
                 name=selected_place,
@@ -598,24 +584,23 @@ if page == "Sistem Rekomendasi":
 
             )
 
-            st.write("Recommended Places:")
+            st.write("Rekomendasi Tempat:")
 
             st.dataframe(recommendations)
 
     if selected_model == "Content-Based Filtering+":
 
         st.subheader("Content-Based Recommendations+")
-        with st.expander("What is Content-Based Filtering+?"):
+        with st.expander("Apa itu Content-Based Filtering+?"):
             st.write("""
-            This method enhances basic content-based filtering by using TF-IDF, which assigns weights to words 
-            based on their importance, resulting in more refined recommendations.
+            Content-Based Filtering+ menggunakan TF-IDF (Term Frequency-Inverse Document Frequency) untuk memberikan bobot pada istilah berdasarkan kepentingannya dalam dataset. Metode ini menangkap keunikan tempat lebih baik dibandingkan dengan CountVectorizer, menghasilkan rekomendasi yang lebih relevan dan akurat.
             """)
 
-        selected_place = st.text_input("Enter a Travel Content:")
+        selected_place = st.text_input("Masukan Konten Wisata:")
 
-        num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
+        num_recommendations = st.slider("Jumlah Rekomendasi:", min_value=1, max_value=10, value=5)
 
-        if st.button("Recommend"):
+        if st.button("Rekomendasi"):
             recommendations = content_based_recommendation_tfidf(
                 name=selected_place,
                 cosine_sim_tfidf=cosine_sim_tfidf,  # Correct parameter name
@@ -623,30 +608,28 @@ if page == "Sistem Rekomendasi":
                 n=num_recommendations
             )
 
-            st.write("Recommended Places:")
+            st.write("Rekomendasi Tempat:")
 
             st.dataframe(recommendations)
 
     if selected_model == "Collaborative Filtering SVD":
-        st.title("Collaborative Filtering with SVD")
         st.subheader("Collaborative Filtering with SVD")
-        with st.expander("What is Collaborative Filtering with SVD?"):
+        with st.expander("Apa itu Collaborative Filtering with SVD?"):
             st.write("""
-                This method uses Singular Value Decomposition (SVD) to discover latent patterns in user preferences 
-                and item features, making it effective for sparse datasets.
+                Collaborative Filtering dengan SVD (Singular Value Decomposition) adalah teknik matrix factorization yang mendekomposisi matriks interaksi pengguna-tempat menjadi faktor laten. Pendekatan ini efektif untuk dataset yang jarang, di mana banyak pengguna hanya memberikan rating untuk beberapa tempat.
                 """)
         # Show user table
         display_user_table()
         # User input for User ID
-        user_id = st.number_input("Enter User ID:", min_value=1, step=1)
-        num_recommendations = st.slider("Number of Recommendations:", min_value=1, max_value=10, value=5)
+        user_id = st.number_input("Masukan ID Pengguna:", min_value=1, step=1)
+        num_recommendations = st.slider("Jumlah Rekomendasi:", min_value=1, max_value=10, value=5)
 
-        if st.button("Recommend Based on Collaborative Filtering"):
+        if st.button("Rekomendasi"):
             if user_id not in tourism_rating['User_Id'].unique():
                 st.error(f"User ID {user_id} is not found in the dataset!")
             else:
                 recommendations = collaborative_filtering_svd(tourism_rating, user_id, n=num_recommendations)
-                st.write("Here are the recommendations based on your preferences:")
+                st.write("Berikut ini adalah Rekomendasi berdasarkan preferensi pengguna:")
                 st.dataframe(recommendations)
 
 
