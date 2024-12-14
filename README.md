@@ -26,6 +26,7 @@ Menampilkan wawasan mendalam tentang data tempat wisata, seperti:
 - Menghitung daftar tempat wisata terbaik berdasarkan Weighted Rating:
 - Menggunakan rata-rata ulasan dan popularitas (jumlah ulasan).
 - Mengkombinasikan skor dengan pendekatan persentil.
+
 <br>
 # 💡 Penjelasan Metode
 1. Simple Recommendation
