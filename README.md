@@ -1,4 +1,4 @@
-Berikut adalah versi yang diperbaiki dan dirapikan agar sesuai dengan format standar **README.md** di GitHub. Format ini menggunakan Markdown dengan heading, list, dan penataan yang rapi:
+
 
 ---
 
