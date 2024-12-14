@@ -13,7 +13,7 @@ Menawarkan beberapa metode rekomendasi untuk pengalaman yang lebih personal:
 - Content-Based Filtering+ (TF-IDF): Versi lanjutan dengan penanganan term berbobot menggunakan TF-IDF.
 - Collaborative Filtering (RecommenderNet): Menggunakan TensorFlow dan embedding untuk memprediksi preferensi berdasarkan data historis pengguna.
 - Collaborative Filtering with SVD: Menggunakan teknik dekomposisi matriks untuk menangani dataset yang jarang (sparse).
-<br>
+
 2. Statistik Tempat Wisata
 Menampilkan wawasan mendalam tentang data tempat wisata, seperti:
 - Distribusi kategori tempat wisata.
@@ -21,7 +21,7 @@ Menampilkan wawasan mendalam tentang data tempat wisata, seperti:
 - Kota dengan jumlah tempat wisata terbanyak.
 - Hubungan harga dan rating tempat wisata.
 - Statistik pengguna (usia, gender, lokasi).
-<br>
+
 3. Top 10 Tempat Wisata Terbaik
 - Menghitung daftar tempat wisata terbaik berdasarkan Weighted Rating:
 - Menggunakan rata-rata ulasan dan popularitas (jumlah ulasan).
