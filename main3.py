@@ -544,12 +544,6 @@ st.set_page_config(layout="wide", page_title="Sistem Rekomendasi Tempat Wisata L
 # Kelompok Data Science Melon - Kelas A
 # """)
 
-# # Configure page layout and title with logo
-# st.set_page_config(
-#     layout="wide",
-#     page_title="Sistem Rekomendasi Tempat Wisata Lamongan",
-#     page_icon="logo.jpg"  # Replace globe icon with logo.jpg
-# )
 
 # Add a logo and title in the header
 # Add logo and title
