@@ -182,15 +182,6 @@ from surprise import KNNBasic
 def item_based_recommendation(data, item_id, tourism_with_id, n=5):
     """
     Recommend places similar to the given item_id using item-based collaborative filtering.
-
-    Args:
-        data (pd.DataFrame): DataFrame containing user ratings.
-        item_id (str): ID of the place for which recommendations are to be made.
-        tourism_with_id (pd.DataFrame): DataFrame with tourism place details.
-        n (int): Number of recommendations to return.
-
-    Returns:
-        pd.DataFrame: Top n recommended places.
     """
     try:
         # Prepare the dataset for Surprise
@@ -206,12 +197,14 @@ def item_based_recommendation(data, item_id, tourism_with_id, n=5):
         trainset = dataset.build_full_trainset()
         item_based_model.fit(trainset)
 
-        # Check if the item ID exists in the training data
-        if item_id not in trainset._raw2inner_id_items:
-            st.warning(f"Place ID {item_id} not found in the dataset.")
-            return pd.DataFrame()
+        # Debug: Print internal mappings
+        st.write("Internal Item IDs (Surprise):", trainset._raw2inner_id_items)
 
         # Convert the item ID to the internal Surprise ID
+        if item_id not in trainset._raw2inner_id_items:
+            st.warning(f"Place ID {item_id} not found in the training dataset.")
+            return tourism_with_id.sort_values(by='Rating', ascending=False).head(n)
+
         item_inner_id = trainset.to_inner_iid(item_id)
 
         # Get the top n similar items
@@ -220,15 +213,12 @@ def item_based_recommendation(data, item_id, tourism_with_id, n=5):
 
         # Fetch and display the recommended items
         recommendations = tourism_with_id[tourism_with_id['Place_Id'].isin(similar_items)]
-        if recommendations.empty:
-            st.warning("No recommendations found. Returning fallback results.")
-
-
         return recommendations[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']].head(n)
 
     except Exception as e:
         st.error(f"Error during item-based recommendation: {e}")
         return pd.DataFrame()
+
 
 def collaborative_filtering_with_model(data, user_id, model, n=5):
     try:
