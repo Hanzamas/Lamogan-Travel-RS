@@ -545,26 +545,13 @@ st.set_page_config(layout="wide", page_title="Sistem Rekomendasi Tempat Wisata L
 #     page_icon="logo.jpg"  # Replace globe icon with logo.jpg
 # )
 
-# # Add a logo and title in the header
-# st.markdown(
-#     """
-#     <div style="display: flex; align-items: center;">
-#         <img src="data/logo.jpg" alt="Logo" width="50" style="margin-right: 15px;">
-#         <h1 style="display: inline; vertical-align: middle;">Sistem Rekomendasi Tempat Wisata Lamongan</h1>
-#     </div>
-#     <hr>
-#     """,
-#     unsafe_allow_html=True
-# )
-
 # Add a logo and title in the header
-st.image(
-    "data/logo.jpg",  # Path to your logo file
-    width=50
-)
 st.markdown(
     """
-    <h1 style="display: inline; vertical-align: middle;">Sistem Rekomendasi Tempat Wisata Lamongan</h1>
+    <div style="display: flex; align-items: center;">
+        <img src="https://github.com/Hanzamas/Lamogan-Travel-RS/blob/main/logo.jpg" alt="Logo" width="50" style="margin-right: 15px;">
+        <h1 style="display: inline; vertical-align: middle;">Sistem Rekomendasi Tempat Wisata Lamongan</h1>
+    </div>
     <hr>
     """,
     unsafe_allow_html=True
