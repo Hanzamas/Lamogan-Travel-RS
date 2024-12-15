@@ -729,22 +729,22 @@ with tab1:
                 st.dataframe(recommendations)
 # Item-Based Collaborative Filtering
     if selected_model == "Item-Based Collaborative Filtering":
-            st.subheader("Item-Based Collaborative Filtering")
-            with st.expander("Apa itu Item-Based Collaborative Filtering?"):
-                st.write("""
-                Item-Based Collaborative Filtering memberikan rekomendasi berdasarkan kesamaan antara item.
-                """)
+        st.subheader("Item-Based Collaborative Filtering")
+        with st.expander("Apa itu Item-Based Collaborative Filtering?"):
+            st.write("""
+            Item-Based Collaborative Filtering memberikan rekomendasi berdasarkan kesamaan antara item.
+            """)
             # Show tourism table
-            display_wisata_table()
-            selected_place_id = st.text_input("Masukkan ID Tempat:")
-            num_recommendations = st.slider("Jumlah Rekomendasi:", min_value=1, max_value=10, value=5)
+        display_wisata_table()
+        selected_place_id = st.text_input("Masukkan ID Tempat:")
+        num_recommendations = st.slider("Jumlah Rekomendasi:", min_value=1, max_value=10, value=5)
 
-            if st.button("Rekomendasi Berdasarkan Item"):
-                if selected_place_id:
-                    recommendations = item_based_recommendation(tourism_rating, selected_place_id,
+        if st.button("Rekomendasi Berdasarkan Item"):
+            if selected_place_id:
+                recommendations = item_based_recommendation(tourism_rating, selected_place_id,
                                                                 n=num_recommendations)
-                    st.write("Rekomendasi Tempat Berdasarkan Item:")
-                    st.dataframe(recommendations)
+                st.write("Rekomendasi Tempat Berdasarkan Item:")
+                st.dataframe(recommendations)
 
 
 
