@@ -727,8 +727,8 @@ with tab1:
                 recommendations = collaborative_filtering_svd(tourism_rating, user_id, n=num_recommendations)
                 st.write("Berikut ini adalah Rekomendasi berdasarkan preferensi pengguna:")
                 st.dataframe(recommendations)
-        # Item-Based Collaborative Filtering
-        if selected_model == "Item-Based Collaborative Filtering":
+# Item-Based Collaborative Filtering
+    if selected_model == "Item-Based Collaborative Filtering":
             st.subheader("Item-Based Collaborative Filtering")
             with st.expander("Apa itu Item-Based Collaborative Filtering?"):
                 st.write("""
