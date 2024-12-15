@@ -171,6 +171,35 @@ def content_based_recommendation(name, cosine_sim, items, n=5):
 #     recommendations = tourism_with_id[tourism_with_id['Place_Id'].isin(recommended_places)][['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
 #
 #     return recommendations
+from surprise import KNNBasic
+# Item-Based Collaborative Filtering
+def item_based_recommendation(data, item_id, n=5):
+    reader = Reader(rating_scale=(0.5, 5))
+    dataset = Dataset.load_from_df(data[['User_Id', 'Place_Id', 'Place_Ratings']], reader)
+
+    # Train Item-Based Collaborative Filtering Model
+    sim_options = {
+        'name': 'cosine',  # Use cosine similarity
+        'user_based': False  # Set to False for item-based filtering
+    }
+    item_based_model = KNNBasic(sim_options=sim_options)
+    trainset = dataset.build_full_trainset()
+    item_based_model.fit(trainset)
+
+    # Convert the item ID to the internal Surprise ID
+    if item_id not in item_based_model.trainset._raw2inner_id_items:
+        st.warning(f"Place ID {item_id} not found!")
+        return pd.DataFrame()
+
+    item_inner_id = item_based_model.trainset.to_inner_iid(item_id)
+
+    # Get the top n similar items
+    neighbors = item_based_model.get_neighbors(item_inner_id, k=n)
+    similar_items = [item_based_model.trainset.to_raw_iid(inner_id) for inner_id in neighbors]
+
+    # Fetch and display the recommended items
+    recommendations = tourism_with_id[tourism_with_id['Place_Id'].isin(similar_items)]
+    return recommendations[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']]
 
 def collaborative_filtering_with_model(data, user_id, model, n=5):
     try:
@@ -389,6 +418,10 @@ def display_user_table():
     st.subheader("User Information")
     user_table = user_data[['User_Id', 'Name', 'Gender', 'Age', 'Location']].sort_values(by='User_Id')
     st.dataframe(user_table)
+def display_wisata_table():
+    st.subheader("Tempat Wisata")
+    wisata_table = tourism_with_id[['Place_Id', 'Place_Name', 'Category', 'City', 'Rating', 'Price', 'Jumlah Ulasan']].sort_values(by='Place_Id')
+    st.dataframe(wisata_table)
 
 def display_statistics():
     st.header("Statistik Data Tempat Wisata dan Pengguna")
@@ -491,10 +524,41 @@ def add_footer():
 # Streamlit UI
 # st.sidebar.title("Navigasi Sistem Rekomendasi Tempat Wisata")
 # page = st.sidebar.radio("Go to:", ["Sistem Rekomendasi", "Statistik", "Top 10 tempat terbaik"])
-st.set_page_config(layout="wide", page_title="Sistem Rekomendasi Tempat Wisata Lamongan", page_icon="🌍")
+# st.set_page_config(layout="wide", page_title="Sistem Rekomendasi Tempat Wisata Lamongan", page_icon="🌍")
+# st.markdown("""
+# # 🌍 Sistem Rekomendasi Tempat Wisata Lamongan
+# ---
+# Sistem ini dirancang untuk membantu pengguna menemukan tempat wisata terbaik berdasarkan kebutuhan dan preferensi mereka. Dengan berbagai metode rekomendasi seperti **Content-Based Filtering**, **Collaborative Filtering**, dan **Hybrid Recommendations**, aplikasi ini memberikan pengalaman yang personal dan relevan.
+#
+# Berikut adalah fitur utama dalam sistem ini:
+# - **Sistem Rekomendasi**: Menyediakan berbagai metode rekomendasi.
+# - **Statistik**: Menampilkan data dan wawasan dari basis data tempat wisata.
+# - **Top 10 Tempat Terbaik**: Memberikan daftar tempat wisata dengan ulasan terbaik berdasarkan analisis data.
+#
+# Kelompok Data Science Melon - Kelas A
+# """)
+
+# Configure page layout and title with logo
+st.set_page_config(
+    layout="wide",
+    page_title="Sistem Rekomendasi Tempat Wisata Lamongan",
+    page_icon="logo.jpg"  # Replace globe icon with logo.jpg
+)
+
+# Add a logo and title in the header
+st.markdown(
+    """
+    <div style="display: flex; align-items: center;">
+        <img src="logo.jpg" alt="Logo" width="50" style="margin-right: 15px;">
+        <h1 style="display: inline; vertical-align: middle;">Sistem Rekomendasi Tempat Wisata Lamongan</h1>
+    </div>
+    <hr>
+    """,
+    unsafe_allow_html=True
+)
+
+# App description below the title
 st.markdown("""
-# 🌍 Sistem Rekomendasi Tempat Wisata Lamongan
----
 Sistem ini dirancang untuk membantu pengguna menemukan tempat wisata terbaik berdasarkan kebutuhan dan preferensi mereka. Dengan berbagai metode rekomendasi seperti **Content-Based Filtering**, **Collaborative Filtering**, dan **Hybrid Recommendations**, aplikasi ini memberikan pengalaman yang personal dan relevan.
 
 Berikut adalah fitur utama dalam sistem ini:
@@ -516,7 +580,7 @@ with tab1:
     st.header("Opsi Metode Rekomendasi")
     selected_model = st.selectbox(
         "Pilih Metode Rekomendasi:",
-        ["Simple Recommendation", "Content-Based Filtering" , "Content-Based Filtering+", "Collaborative Filtering RecommenderNet", "Collaborative Filtering SVD"]
+        ["Simple Recommendation", "Content-Based Filtering" , "Content-Based Filtering+", "Collaborative Filtering RecommenderNet", "Collaborative Filtering SVD", "Item-Based Collaborative Filtering"]
     )
 
     if selected_model == "Simple Recommendation":
@@ -656,7 +720,24 @@ with tab1:
                 recommendations = collaborative_filtering_svd(tourism_rating, user_id, n=num_recommendations)
                 st.write("Berikut ini adalah Rekomendasi berdasarkan preferensi pengguna:")
                 st.dataframe(recommendations)
+        # Item-Based Collaborative Filtering
+        if selected_model == "Item-Based Collaborative Filtering":
+            st.subheader("Item-Based Collaborative Filtering")
+            with st.expander("Apa itu Item-Based Collaborative Filtering?"):
+                st.write("""
+                Item-Based Collaborative Filtering memberikan rekomendasi berdasarkan kesamaan antara item.
+                """)
+            # Show tourism table
+            display_wisata_table()
+            selected_place_id = st.text_input("Masukkan ID Tempat:")
+            num_recommendations = st.slider("Jumlah Rekomendasi:", min_value=1, max_value=10, value=5)
 
+            if st.button("Rekomendasi Berdasarkan Item"):
+                if selected_place_id:
+                    recommendations = item_based_recommendation(tourism_rating, selected_place_id,
+                                                                n=num_recommendations)
+                    st.write("Rekomendasi Tempat Berdasarkan Item:")
+                    st.dataframe(recommendations)
 
 
 
