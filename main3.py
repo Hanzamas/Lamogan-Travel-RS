@@ -524,7 +524,7 @@ def add_footer():
 # Streamlit UI
 # st.sidebar.title("Navigasi Sistem Rekomendasi Tempat Wisata")
 # page = st.sidebar.radio("Go to:", ["Sistem Rekomendasi", "Statistik", "Top 10 tempat terbaik"])
-# st.set_page_config(layout="wide", page_title="Sistem Rekomendasi Tempat Wisata Lamongan", page_icon="🌍")
+st.set_page_config(layout="wide", page_title="Sistem Rekomendasi Tempat Wisata Lamongan", page_icon="logo.jpg")
 # st.markdown("""
 # # 🌍 Sistem Rekomendasi Tempat Wisata Lamongan
 # ---
@@ -538,12 +538,12 @@ def add_footer():
 # Kelompok Data Science Melon - Kelas A
 # """)
 
-# Configure page layout and title with logo
-st.set_page_config(
-    layout="wide",
-    page_title="Sistem Rekomendasi Tempat Wisata Lamongan",
-    page_icon="logo.jpg"  # Replace globe icon with logo.jpg
-)
+# # Configure page layout and title with logo
+# st.set_page_config(
+#     layout="wide",
+#     page_title="Sistem Rekomendasi Tempat Wisata Lamongan",
+#     page_icon="logo.jpg"  # Replace globe icon with logo.jpg
+# )
 
 # Add a logo and title in the header
 st.markdown(
