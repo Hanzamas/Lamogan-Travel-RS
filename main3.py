@@ -180,44 +180,39 @@ def content_based_recommendation(name, cosine_sim, items, n=5):
 from surprise import KNNBasic
 # Item-Based Collaborative Filtering
 def item_based_recommendation(data, item_id, tourism_with_id, n=5):
-    """
-    Recommend places similar to the given item_id using item-based collaborative filtering.
-    """
-    try:
-        # Prepare the dataset for Surprise
-        reader = Reader(rating_scale=(0.5, 5))
-        dataset = Dataset.load_from_df(data[['User_Id', 'Place_Id', 'Place_Ratings']], reader)
+    # Ensure Place_IDs are strings in both datasets and input
+    tourism_rating['Place_Id'] = tourism_rating['Place_Id'].astype(str)
+    tourism_with_id['Place_Id'] = tourism_with_id['Place_Id'].astype(str)
+    item_id = str(item_id)  # Convert input ID to string
 
-        # Train Item-Based Collaborative Filtering Model
-        sim_options = {
-            'name': 'cosine',  # Use cosine similarity
-            'user_based': False  # Set to False for item-based filtering
-        }
-        item_based_model = KNNBasic(sim_options=sim_options)
-        trainset = dataset.build_full_trainset()
-        item_based_model.fit(trainset)
+    # Ensure input is a string
+    item_id = str(item_id)
 
-        # Debug: Print internal mappings
-        st.write("Internal Item IDs (Surprise):", trainset._raw2inner_id_items)
+    # Train the model as before
+    reader = Reader(rating_scale=(0.5, 5))
+    dataset = Dataset.load_from_df(data[['User_Id', 'Place_Id', 'Place_Ratings']], reader)
 
-        # Convert the item ID to the internal Surprise ID
-        if item_id not in trainset._raw2inner_id_items:
-            st.warning(f"Place ID {item_id} not found in the training dataset.")
-            return tourism_with_id.sort_values(by='Rating', ascending=False).head(n)
+    sim_options = {
+        'name': 'cosine',
+        'user_based': False
+    }
+    item_based_model = KNNBasic(sim_options=sim_options)
+    trainset = dataset.build_full_trainset()
+    item_based_model.fit(trainset)
 
-        item_inner_id = trainset.to_inner_iid(item_id)
+    # Debug: Check if item_id exists in training set
+    if item_id not in trainset._raw2inner_id_items:
+        st.warning(f"Place ID {item_id} not found in the training dataset.")
+        st.write("Internal Item IDs (Surprise):", trainset._raw2inner_id_items)  # Debug info
+        return tourism_with_id.sort_values(by='Rating', ascending=False).head(n)
 
-        # Get the top n similar items
-        neighbors = item_based_model.get_neighbors(item_inner_id, k=n)
-        similar_items = [trainset.to_raw_iid(inner_id) for inner_id in neighbors]
+    # Proceed with recommendation
+    item_inner_id = trainset.to_inner_iid(item_id)
+    neighbors = item_based_model.get_neighbors(item_inner_id, k=n)
+    similar_items = [trainset.to_raw_iid(inner_id) for inner_id in neighbors]
 
-        # Fetch and display the recommended items
-        recommendations = tourism_with_id[tourism_with_id['Place_Id'].isin(similar_items)]
-        return recommendations[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']].head(n)
-
-    except Exception as e:
-        st.error(f"Error during item-based recommendation: {e}")
-        return pd.DataFrame()
+    recommendations = tourism_with_id[tourism_with_id['Place_Id'].isin(similar_items)]
+    return recommendations[['Place_Name', 'Category', 'City', 'Rating', 'Price', 'Description']].head(n)
 
 
 def collaborative_filtering_with_model(data, user_id, model, n=5):
