@@ -747,6 +747,18 @@ with tab1:
 # Item-Based Collaborative Filtering
     if selected_model == "Item-Based Collaborative Filtering":
         st.subheader("Item-Based Collaborative Filtering")
+        st.write("Available Place IDs in the dataset:")
+        st.write(tourism_rating['Place_Id'].unique())
+        # Check unique Place IDs in both datasets
+        rating_ids = tourism_rating['Place_Id'].unique()
+        tourism_ids = tourism_with_id['Place_Id'].unique()
+
+        # Find mismatched IDs
+        missing_in_rating = set(tourism_ids) - set(rating_ids)
+        missing_in_tourism = set(rating_ids) - set(tourism_ids)
+
+        st.write("Place IDs missing in ratings data:", missing_in_rating)
+        st.write("Place IDs missing in tourism data:", missing_in_tourism)
         with st.expander("Apa itu Item-Based Collaborative Filtering?"):
             st.write("""
             Item-Based Collaborative Filtering memberikan rekomendasi berdasarkan kesamaan antara item.
