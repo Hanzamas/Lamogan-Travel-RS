@@ -549,7 +549,7 @@ st.set_page_config(layout="wide", page_title="Sistem Rekomendasi Tempat Wisata L
 st.markdown(
     """
     <div style="display: flex; align-items: center;">
-        <img src="logo.jpg" alt="Logo" width="50" style="margin-right: 15px;">
+        <img src="data/logo.jpg" alt="Logo" width="50" style="margin-right: 15px;">
         <h1 style="display: inline; vertical-align: middle;">Sistem Rekomendasi Tempat Wisata Lamongan</h1>
     </div>
     <hr>
