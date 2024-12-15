@@ -8,10 +8,16 @@ from tensorflow.keras.models import load_model
 from tensorflow import keras
 from surprise import SVD, Dataset, Reader
 import numpy as np
+import base64
+
+def image_to_base64(image_path):
+    with open(image_path, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode("utf-8")
 
 # Buat daftar stop words bahasa Indonesia menggunakan Sastrawi
 factory = StopWordRemoverFactory()
 indonesian_stop_words = factory.get_stop_words()
+base64_logo = image_to_base64("data/logo.jpg")  # Convert the logo to Base64
 
 # Load datasets
 @st.cache_data
@@ -546,10 +552,11 @@ st.set_page_config(layout="wide", page_title="Sistem Rekomendasi Tempat Wisata L
 # )
 
 # Add a logo and title in the header
+# Add logo and title
 st.markdown(
-    """
+    f"""
     <div style="display: flex; align-items: center;">
-        <img src="https://github.com/Hanzamas/Lamogan-Travel-RS/blob/main/logo.jpg" alt="Logo" width="50" style="margin-right: 15px;">
+        <img src="data:image/jpeg;base64,{base64_logo}" alt="Logo" width="50" style="margin-right: 15px;">
         <h1 style="display: inline; vertical-align: middle;">Sistem Rekomendasi Tempat Wisata Lamongan</h1>
     </div>
     <hr>

@@ -8,3 +8,4 @@ matplotlib
 Sastrawi
 tensorflow
 keras
+base64
