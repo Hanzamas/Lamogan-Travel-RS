@@ -753,13 +753,12 @@ with tab1:
             """)
             # Show tourism table
         display_wisata_table()
-        selected_place_id = st.text_input("Masukkan ID Tempat:")
+        place_id_input = st.text_input("Masukkan ID Tempat:")
         num_recommendations = st.slider("Jumlah Rekomendasi:", min_value=1, max_value=10, value=5)
 
-        if st.button("Rekomendasi Berdasarkan Item"):
-            if selected_place_id:
-                recommendations = item_based_recommendation(tourism_rating, selected_place_id,
-                                                                n=num_recommendations)
+        if st.button("Rekomendasi "):
+            if place_id_input:
+                recommendations = item_based_recommendation(tourism_rating, place_id_input, tourism_with_id, n=num_recommendations)
                 st.write("Rekomendasi Tempat Berdasarkan Item:")
                 st.dataframe(recommendations)
 
